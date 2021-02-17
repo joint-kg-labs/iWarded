@@ -1,0 +1,59 @@
+# Eclipse
+.classpath
+.project
+.settings/
+.metadata/
+ 
+# Intellij
+.idea/
+*.iml
+*.iws
+ 
+# Mac
+.DS_Store
+ 
+# Maven
+log/
+target/
+
+# Misc
+*.zip
+*.log
+$py.class
+*py.class
+__pycache__
+*.pyc
+
+# Cache
+ehCache/
+src/main/resources/.lock
+
+
+tmp/
+*.swp
+nohup.out
+
+/bin/
+*.class
+
+# Benchmark data
+benchmark_data/*
+
+# Generated programs
+generatedPrograms/*
+
+# Jupyter
+src/main/external-resources/vadalog-jupyter-kernel/notebooks/
+*.ipynb
+*.lock
+clients/jupyterLab/node_modules/
+.ipynb_checkpoints*
+
+# Neo4J
+neo4j.cert
+neo4j.key
+store_lock
+
+# Repository and disk
+disk/*
+repository/*

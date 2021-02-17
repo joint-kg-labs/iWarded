@@ -1,0 +1,45 @@
+
+% =====ORIGINAL VADA PROGRAM PARAMETERS=====
+% Number of Input Atoms: 1
+% Number of Output Atoms: 1
+% Average number of Variables per Atom: 1
+% Variance number of Variables per Atom: 1.0
+% Number of Existential Rules: 0
+% Average number of Existentially Quantified Variables per Rule: 0
+% Variance of Existentially Quantified Variables per Rule: 0.0
+% Number of Dangerous Rules: 0
+% Number of Linear Rules: 5
+% Number of Join Rules: 0
+% Number of Harmless-Harmless Join Rules with Ward: 0
+% Number of Harmless-Harmless Join Rules without Ward: 0
+% Number of Harmless-Harmful Joins: 0
+% Number of Harmful-Harmful Joins: 0
+% Average number of Chase Steps: 1
+% Number of Chase Steps for each Output Atom: 
+% out_1->1; 
+% Number of Linear Recursions: 0
+% Number of Left Join Recursions: 0
+% Number of Right Join Recursions: 0
+% Number of Non-Linear Join Recursions: 0
+% Average Recursion Length: 0
+% Length for each Recursion: 
+% 
+% Number of Selection Conditions: 0
+% Average Selectivity: 0
+% Number of records in CSV files: 10
+% Guardedness of the Program: true
+% Name of the Program: smallProgram
+% ==========================================
+
+% =====ADAPTED VADA PROGRAM PARAMETERS=====
+% ==========================================
+
+@output("out_1").
+@input("edb_1").
+@bind("edb_1","csv","generatedPrograms/smallProgram","edb_1_csv.csv").
+@mapping("edb_1",0,"arg_0","int").
+idb_1(HARMLESS_1) :- edb_1(HARMLESS_1).
+idb_2(HARMLESS_1) :- idb_1(HARMLESS_1).
+idb_3(HARMLESS_1) :- idb_2(HARMLESS_1).
+idb_4(HARMLESS_1) :- idb_3(HARMLESS_1).
+out_1(HARMLESS_1) :- edb_1(HARMLESS_1).

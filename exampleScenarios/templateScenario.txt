@@ -1,0 +1,75 @@
+# iWarded Scenario Configuration File (TEMPLATE)
+
+# Number of Input Atoms [int >= 1]
+NumberOfInputAtoms = 1
+
+# Number of Output Atoms [int >= 0]
+NumberOfOutputAtoms = 0
+
+# Average number of Variables per Atom [int >= 1]
+AverageVarsInAtom = 1
+
+# Variance of Variables per Atom [float >= 1.0]
+VarianceVarsInAtom = 1.0
+
+# Number of Existential Rules [int >= 0]
+NumberOfExistentialRules = 0
+
+# Average number of Existentially Quantified Variables per Rule [int >= 0]
+AverageEVarsInRule = 0
+
+# Variance of Existentially Quantified Variables per Rule [float >= 0]
+VarianceEVarsInRule = 0
+
+# Number of Dangerous Rules [int >= 0]
+NumberOfDangerousRules = 0
+
+# Number of Linear Rules [int >= 0]
+NumberOfLinearRules = 0
+
+# Number of Harmless-Harmless Joins with Ward [int >= 0]
+NumberOfHarmlessHarmlessJoinsWithWard = 0
+
+# Number of Harmless-Harmless Joins without Ward [int >= 0]
+NumberOfHarmlessHarmlessJoinsWithoutWard = 0
+
+# Number of Harmless-Harmful Joins [int >= 0]
+NumberOfHarmlessHarmfulJoins = 0
+
+# Number of Harmful-Harmful Joins [int >= 0]
+NumberOfHarmfulHarmfulJoins = 0
+
+# Average Number of Chase Steps from Input to Output [int >= 0]
+AverageChaseSteps = 0
+
+# Number of Linear Recursions [int >= 0]
+NumberOfLinearRecursions = 0
+
+# Number of Left-Join Recursions [int >= 0]
+NumberOfLeftJoinRecursions = 0
+
+# Number of Right-Join Recursions [int >= 0]
+NumberOfRightJoinRecursions = 0
+
+# Number of Non-Linear Join Recursions [int >= 0]
+NumberOfNonLinearJoinRecursions = 0
+
+# Average Recursion length [int >= 0]
+AverageRecursionLength = 0
+
+# Number of Selection Conditions [int >= 0]
+NumberOfSelectionConditions = 0
+
+# Average Selectivity [int >= 0]
+AverageSelectivity = 0
+
+# Number of records in CSV files [int >= 0]
+NumberOfRecordsCSV = 0
+
+# Guardedness of the Program [boolean true/false]
+IsGuarded = false
+
+# Name of the Program
+ProgramName = templateProgram
+
+		

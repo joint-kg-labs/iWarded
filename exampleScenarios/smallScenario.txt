@@ -1,0 +1,75 @@
+# iWarded Scenario Configuration File
+
+# Number of Input Atoms
+NumberOfInputAtoms = 1
+
+# Number of Output Atoms
+NumberOfOutputAtoms = 1
+
+# Average number of Variables per Atom
+AverageVarsInAtom = 1
+
+# Variance of Variables per Atom
+VarianceVarsInAtom = 1.0
+
+# Number of Existential Rules
+NumberOfExistentialRules = 0
+
+# Average number of Existentially Quantified Variables per Rule
+AverageEVarsInRule = 0
+
+# Variance of Existentially Quantified Variables per Rule
+VarianceEVarsInRule = 0
+
+# Number of Dangerous Rules
+NumberOfDangerousRules = 0
+
+# Number of Linear Rules
+NumberOfLinearRules = 5
+
+# Number of Harmless-Harmless Joins with Ward
+NumberOfHarmlessHarmlessJoinsWithWard = 0
+
+# Number of Harmless-Harmless Joins without Ward
+NumberOfHarmlessHarmlessJoinsWithoutWard = 0
+
+# Number of Harmless-Harmful Joins
+NumberOfHarmlessHarmfulJoins = 0
+
+# Number of Harmful-Harmful Joins
+NumberOfHarmfulHarmfulJoins = 0
+
+# Average Number of Chase Steps from Input to Output
+AverageChaseSteps = 1
+
+# Number of Linear Recursions
+NumberOfLinearRecursions = 0
+
+# Number of Left-Join Recursions
+NumberOfLeftJoinRecursions = 0
+
+# Number of Right-Join Recursions
+NumberOfRightJoinRecursions = 0
+
+# Number of Non-Linear Join Recursions
+NumberOfNonLinearJoinRecursions = 0
+
+# Average Recursion length
+AverageRecursionLength = 0
+
+# Number of Selection Conditions
+NumberOfSelectionConditions = 0
+
+# Average Selectivity
+AverageSelectivity = 0
+
+# Number of records in CSV files
+NumberOfRecordsCSV = 10
+
+# Guardedness of the Program
+IsGuarded = true
+
+# Name of the Program
+ProgramName = smallProgram
+
+		

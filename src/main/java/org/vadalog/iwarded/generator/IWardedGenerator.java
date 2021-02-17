@@ -32,7 +32,7 @@ import org.vadalog.iwarded.model.Model;
  * It allows building programs based on scenarios with various architecture, dimensions and characteristics. 
  * Each program is written in a .vada file and it is accompanied by a set of generated .csv files as data sources.
  * 
- * For more details about iWarded, please consult the manual: https://github.com/joint-kg-labs/iWarded/doc/iWarded_manual.md
+ * For more details about iWarded, please consult the manual: https://github.com/joint-kg-labs/iWarded/blob/main/doc/iWarded_manual.md
  * 
  * @author tbaldazzi
  * 
@@ -181,7 +181,7 @@ public final class IWardedGenerator {
 		System.out.println("name of the folder containing the generated program and the data files");
 		System.out.println();
 		
-		System.out.println("\nRefer to https://github.com/joint-kg-labs/iWarded/doc/iWarded_manual.md for full documentation\n");
+		System.out.println("\nRefer to https://github.com/joint-kg-labs/iWarded/blob/main/doc/iWarded_manual.md for full documentation\n");
 	}
 
 

@@ -1,4 +1,4 @@
-# User Manual to iWarded
+# iWarded Manual
 
 # Overview
 

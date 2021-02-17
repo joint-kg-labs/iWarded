@@ -11,7 +11,7 @@ In particular it allows:
 The benchmark settings it creates consist of synthetic programs and data sources from realistic scenarios with distinct characteristics,
 and are aimed at testing and benchmarking systems that implement warded or guarded Datalog+/- reasoning.
 
-Please refer to the [wiki](https://github.com/joint-kg-labs/iWarded/wiki) for detailed documentation.
+Please refer to the [manual](https://github.com/joint-kg-labs/iWarded/doc/iWarded_manual.md) for detailed documentation.
 
 ## Installing iWarded
 iWarded is written in Java and uses ```Maven``` for building.  
@@ -42,7 +42,7 @@ usage: CommandLineParameters
  -d,--docs                                                           Describe Input Parameters from Documentation
  -e,--exit                                                           Close iWarded
 ```
-As can be observed, iWarded allows to generate programs from input args as well as from pre-defined [configuration scenarios](https://github.com/joint-kg-labs/iWarded/wiki/Configuration-Scenario-and-Program).  
+As can be observed, iWarded allows to generate programs from input args as well as from pre-defined [configuration scenarios](https://github.com/joint-kg-labs/iWarded/tree/main/exampleScenarios).  
 The following is an example of a single use of the generator, based on the configuration scenario ```smallProgram.txt```:
 ```
 ./iWarded_run.sh -c exampleScenarios/smallScenario.txt

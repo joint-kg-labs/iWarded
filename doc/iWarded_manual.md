@@ -55,7 +55,7 @@ The following are the arguments currently supported by iWarded (both the interac
 ```
 usage: CommandLineParameters
  -a,--args                                                           Build Program from Input Parameters
- -c,--config ([path-to-configScenarioFile.txt] only in single use)   Build Program From from Configuration Scenario
+ -c,--config ([path-to-configScenarioFile.txt] only in single use)   Build Program from Configuration Scenario
  -d,--docs                                                           Describe Input Parameters from Documentation
  -e,--exit                                                           Close iWarded
 ```

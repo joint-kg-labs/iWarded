@@ -52,3 +52,4 @@ It also provides the time (in seconds) required for the generation process.
 
 ## Contact Information
 - Teodoro Baldazzi - teodoro.baldazzi@gmail.com
+- Emanuel Sallinger - https://dbai.tuwien.ac.at/staff/sallinger/

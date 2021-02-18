@@ -14,6 +14,10 @@ and are aimed at testing and benchmarking systems that implement warded or guard
 
 ## Contact Information
 - Teodoro Baldazzi - teodoro.baldazzi@gmail.com
+- Emanuel Sallinger - https://dbai.tuwien.ac.at/staff/sallinger/
+
+## Acknowledgements
+This project is supported by the Vienna Science and Technology fund (WWTF) grant VRG18-013. See https://kg.dbai.tuwien.ac.at/ for more details.
 
 # Table of Contents
 
@@ -221,7 +225,7 @@ Please refer to [Configuration Scenario and Program](#configuration-scenario-and
 # The Generator
 
 ## Rules and Features
-iWarded generates sets of Warded Datalog+/- rules with diverse characteristics. The current version of iWarded follows the language model and notation adopted in the [Vadalog System](https://www.vldb.org/pvldb/vol11/p975-bellomarini.pdf).
+iWarded generates sets of Warded Datalog+/- rules with diverse characteristics. A rule is a first-order sentence of the form `h :- b1, ..., bn` where `b1, ..., bn` are the atoms of the *body* and `h` is the atom of the *head*. The current version of iWarded follows the language model and notation adopted in the [Vadalog System](https://www.vldb.org/pvldb/vol11/p975-bellomarini.pdf).
 
 We here provide insight into the types of rules and recursions it can generate, as well as a set of additional features, part of the Vadalog language.  
 In terms of rules, iWarded is able to create:

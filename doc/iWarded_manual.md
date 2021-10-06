@@ -13,7 +13,8 @@ The benchmark settings it creates consist of synthetic programs and data sources
 and are aimed at testing and benchmarking systems that implement warded or guarded Datalog+/- reasoning.
 
 ## Contact Information
-- Teodoro Baldazzi - teodoro.baldazzi@gmail.com
+- Teodoro Baldazzi  - https://www.linkedin.com/in/teodoro-baldazzi/
+- Luigi Bellomarini - https://www.linkedin.com/in/bellomarini/
 - Emanuel Sallinger - https://dbai.tuwien.ac.at/staff/sallinger/
 
 ## Acknowledgements

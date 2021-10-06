@@ -51,7 +51,8 @@ Each execution generates a warded program, written in a ```.vada``` file, and a 
 It also provides the time (in seconds) required for the generation process.
 
 ## Contact Information
-- Teodoro Baldazzi - teodoro.baldazzi@gmail.com
+- Teodoro Baldazzi  - https://www.linkedin.com/in/teodoro-baldazzi/
+- Luigi Bellomarini - https://www.linkedin.com/in/bellomarini/
 - Emanuel Sallinger - https://dbai.tuwien.ac.at/staff/sallinger/
 
 ## Acknowledgements

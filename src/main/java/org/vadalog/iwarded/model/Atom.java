@@ -3,6 +3,8 @@ package org.vadalog.iwarded.model;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
+
 /**
  * Copyright (C) 2021  authors: Teodoro Baldazzi, Luigi Bellomarini, Emanuel Sallinger
  * This program is free software: you can redistribute it and/or modify
@@ -24,9 +26,12 @@ public class Atom {
 	private String name;
 	private List<Term> arguments;
 
+	/*A special atom that is used in EGD head*/
+	private boolean isEqualityAtom = false; 
+
 	public Atom(final String name) {
 		this.name = name;
-		arguments = new ArrayList<>();
+		this.arguments = new ArrayList<>();
 	}
 
 	public Atom(final String name, final List<Term> arguments) {
@@ -39,9 +44,8 @@ public class Atom {
 	 * @return the name of this atom
 	 */
 	public String getName() {
-		return name;
+		return this.name;
 	}
-
 
 	/**
 	 * It returns the simple name for this atom, which means that it does not
@@ -57,12 +61,13 @@ public class Atom {
 	}
 
 	public List<Term> getArguments() {
-		return arguments;
+		return this.arguments;
 	}
 
 	public void setArguments(List<Term> arguments) {
 		this.arguments = arguments;
 	}
+
 	/**
 	 * It returns the set of all the variables in this Atom
 	 * @return the set of the variables in this Atom.
@@ -84,7 +89,6 @@ public class Atom {
 		return var;
 	}
 
-
 	public Set<Constant<?>> getAllConstants() {
 		return this.arguments.stream()
 				.filter(x -> x instanceof Constant<?>)
@@ -92,21 +96,38 @@ public class Atom {
 				.collect(Collectors.toSet());
 	}
 
+	public boolean isEqualityAtom() {
+		return this.isEqualityAtom; 
+	}
+
+	public void setEqualityAtom(boolean isEqualityAtom) {
+		this.isEqualityAtom = isEqualityAtom; 
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder s = new StringBuilder();
-		s.append(getName());
-		if (arguments.size() > 0) {
-			s.append("(");
-			final Iterator<Term> i = arguments.iterator();
-			while (i.hasNext()) {
-				final Term argument = i.next();
-				s.append(argument);
-				if (i.hasNext())
-					s.append(",");
-			}
-			s.append(")");
-		} 
+		/*Checks if it is a standard atom*/
+		if (!this.isEqualityAtom) {
+			s.append(this.getName());
+			if (this.arguments.size() > 0) {
+				s.append("(");
+				final Iterator<Term> i = this.arguments.iterator();
+				while (i.hasNext()) {
+					final Term argument = i.next();
+					s.append(argument);
+					if (i.hasNext())
+						s.append(",");
+				}
+				s.append(")");
+			} 
+		}
+		else {
+			/*It is an equality atom which has always two arguments*/
+			s.append(this.arguments.get(0)); 
+			s.append("="); 
+			s.append(this.arguments.get(1)); 	
+		}
 		return s.toString();
 	}
 
@@ -114,8 +135,8 @@ public class Atom {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + Objects.hashCode(arguments);
-		result = prime * result + Objects.hashCode(name);
+		result = prime * result + Objects.hashCode(this.arguments);
+		result = prime * result + Objects.hashCode(this.name);
 		return result;
 	}
 
@@ -127,6 +148,7 @@ public class Atom {
 			return false;
 		Atom other = (Atom) obj;
 		return Objects.equals(this.arguments, other.arguments) &&
+                Objects.equals(this.isEqualityAtom, other.isEqualityAtom) &&
 				Objects.equals(this.name, other.name);
 	}	
 

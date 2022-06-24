@@ -1,0 +1,337 @@
+
+% =====ORIGINAL VADA PROGRAM PARAMETERS=====
+% Number of Input Atoms: 100
+% Number of Output Atoms: 10
+% Average number of Variables per Atom: 1
+% Variance number of Variables per Atom: 1.0
+% Number of Existential Rules: 100
+% Average number of Existentially Quantified Variables per Rule: 1
+% Variance of Existentially Quantified Variables per Rule: 1.0
+% Number of Dangerous Rules: 100
+% Number of Linear Rules: 100
+% Number of Join Rules: 20
+% Number of Harmless-Harmless Join Rules with Ward: 0
+% Number of Harmless-Harmless Join Rules without Ward: 0
+% Number of Harmless-Harmful Joins: 10
+% Number of Harmful-Harmful Joins: 10
+% Average number of Max Chase Steps: 10
+% Number of Max Chase Steps for each Output Atom: 
+% out_1->4; out_10->1; out_2->15; out_3->8; out_4->6; out_5->11; out_6->6; out_7->4; out_8->15; out_9->12; 
+% Number of Linear Recursions: 0
+% Number of Left Join Recursions: 3
+% Number of Right Join Recursions: 3
+% Number of Non-Linear Join Recursions: 3
+% Average Recursion Length: 3
+% Length for each Recursion: 
+% leftJRec_1->4; leftJRec_2->1; leftJRec_3->1; nonLinJRec_1->1; nonLinJRec_2->7; nonLinJRec_3->2; rightJRec_1->2; rightJRec_2->1; rightJRec_3->1; 
+% Number of Selection Conditions: 0
+% Average Selectivity: 3
+% Number of records in CSV files: 100
+% Guardedness of the Program: false
+% Name of the Program: complexProgram
+% ==========================================
+
+% =====ADAPTED VADA PROGRAM PARAMETERS=====
+% Number of Input Atoms: 13
+% Number of Linear Rules: 202
+% Number of Join Rules: 24
+% Number of Harmless-Harmless Join Rules without Ward: 4
+% ==========================================
+
+@output("out_1").
+@bind("out_1","csv","generatedPrograms/complexProgram/outputCsv/","out_1_csv.csv").
+@output("out_2").
+@bind("out_2","csv","generatedPrograms/complexProgram/outputCsv/","out_2_csv.csv").
+@output("out_3").
+@bind("out_3","csv","generatedPrograms/complexProgram/outputCsv/","out_3_csv.csv").
+@output("out_4").
+@bind("out_4","csv","generatedPrograms/complexProgram/outputCsv/","out_4_csv.csv").
+@output("out_5").
+@bind("out_5","csv","generatedPrograms/complexProgram/outputCsv/","out_5_csv.csv").
+@output("out_6").
+@bind("out_6","csv","generatedPrograms/complexProgram/outputCsv/","out_6_csv.csv").
+@output("out_7").
+@bind("out_7","csv","generatedPrograms/complexProgram/outputCsv/","out_7_csv.csv").
+@output("out_8").
+@bind("out_8","csv","generatedPrograms/complexProgram/outputCsv/","out_8_csv.csv").
+@output("out_9").
+@bind("out_9","csv","generatedPrograms/complexProgram/outputCsv/","out_9_csv.csv").
+@output("out_10").
+@bind("out_10","csv","generatedPrograms/complexProgram/outputCsv/","out_10_csv.csv").
+@input("edb_16").
+@bind("edb_16","csv","generatedPrograms/complexProgram/inputCsv/","edb_16_csv.csv").
+@mapping("edb_16",0,"arg_0","int").
+@mapping("edb_16",1,"arg_1","int").
+@input("edb_81").
+@bind("edb_81","csv","generatedPrograms/complexProgram/inputCsv/","edb_81_csv.csv").
+@mapping("edb_81",0,"arg_0","int").
+@mapping("edb_81",1,"arg_1","int").
+@input("edb_37").
+@bind("edb_37","csv","generatedPrograms/complexProgram/inputCsv/","edb_37_csv.csv").
+@mapping("edb_37",0,"arg_0","int").
+@input("edb_10").
+@bind("edb_10","csv","generatedPrograms/complexProgram/inputCsv/","edb_10_csv.csv").
+@mapping("edb_10",0,"arg_0","int").
+@mapping("edb_10",1,"arg_1","int").
+@input("edb_29").
+@bind("edb_29","csv","generatedPrograms/complexProgram/inputCsv/","edb_29_csv.csv").
+@mapping("edb_29",0,"arg_0","int").
+@mapping("edb_29",1,"arg_1","int").
+@mapping("edb_29",2,"arg_2","int").
+@input("edb_65").
+@bind("edb_65","csv","generatedPrograms/complexProgram/inputCsv/","edb_65_csv.csv").
+@mapping("edb_65",0,"arg_0","int").
+@mapping("edb_65",1,"arg_1","int").
+@input("edb_87").
+@bind("edb_87","csv","generatedPrograms/complexProgram/inputCsv/","edb_87_csv.csv").
+@mapping("edb_87",0,"arg_0","int").
+@mapping("edb_87",1,"arg_1","int").
+@mapping("edb_87",2,"arg_2","int").
+@input("edb_14").
+@bind("edb_14","csv","generatedPrograms/complexProgram/inputCsv/","edb_14_csv.csv").
+@mapping("edb_14",0,"arg_0","int").
+@input("edb_48").
+@bind("edb_48","csv","generatedPrograms/complexProgram/inputCsv/","edb_48_csv.csv").
+@mapping("edb_48",0,"arg_0","int").
+@mapping("edb_48",1,"arg_1","int").
+@mapping("edb_48",2,"arg_2","int").
+@input("edb_52").
+@bind("edb_52","csv","generatedPrograms/complexProgram/inputCsv/","edb_52_csv.csv").
+@mapping("edb_52",0,"arg_0","int").
+@mapping("edb_52",1,"arg_1","int").
+@input("edb_97").
+@bind("edb_97","csv","generatedPrograms/complexProgram/inputCsv/","edb_97_csv.csv").
+@mapping("edb_97",0,"arg_0","int").
+@mapping("edb_97",1,"arg_1","int").
+@input("edb_23").
+@bind("edb_23","csv","generatedPrograms/complexProgram/inputCsv/","edb_23_csv.csv").
+@mapping("edb_23",0,"arg_0","int").
+@input("edb_51").
+@bind("edb_51","csv","generatedPrograms/complexProgram/inputCsv/","edb_51_csv.csv").
+@mapping("edb_51",0,"arg_0","int").
+idb_1(HARMLESS_1,HARMLESS_2) :- edb_97(HARMLESS_1,HARMLESS_2).
+idb_2(HARMLESS_1,HARMFUL_1) :- idb_1(HARMLESS_1,HARMLESS_2).
+idb_3(HARMLESS_1) :- idb_2(HARMLESS_1,HARMFUL_1).
+idb_4(HARMLESS_1) :- idb_3(HARMLESS_1), idb_3(HARMLESS_1).
+idb_5(HARMLESS_1,HARMFUL_2,HARMFUL_3) :- idb_4(HARMLESS_1).
+idb_6(HARMLESS_1,HARMFUL_6,HARMFUL_7) :- idb_5(HARMLESS_1,HARMFUL_2,HARMFUL_3), idb_5(HARMLESS_4,HARMFUL_4,HARMFUL_3).
+idb_7(HARMLESS_1,HARMFUL_6,HARMFUL_7) :- idb_6(HARMLESS_1,HARMFUL_6,HARMFUL_7).
+idb_8(HARMLESS_1) :- idb_7(HARMLESS_1,HARMFUL_6,HARMFUL_7).
+idb_9(HARMLESS_1,HARMFUL_8) :- idb_8(HARMLESS_1), idb_8(HARMLESS_1).
+idb_10(HARMLESS_1,HARMFUL_9) :- idb_9(HARMLESS_1,HARMFUL_8).
+idb_11(HARMLESS_1) :- idb_10(HARMLESS_1,HARMFUL_9).
+idb_12(HARMLESS_1) :- idb_11(HARMLESS_1), idb_11(HARMLESS_1).
+idb_13(HARMLESS_1) :- idb_12(HARMLESS_1).
+idb_14(HARMLESS_1,HARMFUL_10,HARMFUL_11) :- idb_13(HARMLESS_1).
+idb_15(HARMLESS_1,HARMFUL_10,HARMFUL_11) :- idb_14(HARMLESS_1,HARMFUL_10,HARMFUL_11).
+out_1(HARMLESS_1) :- idb_3(HARMLESS_1).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_14(HARMLESS_1,HARMFUL_10,HARMFUL_11).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_7(HARMLESS_1,HARMFUL_6,HARMFUL_7).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_5(HARMLESS_1,HARMFUL_2,HARMFUL_3).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_10(HARMLESS_1,HARMFUL_9).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_5(HARMLESS_1,HARMFUL_2,HARMFUL_3).
+out_7(HARMLESS_1) :- idb_3(HARMLESS_1).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_14(HARMLESS_1,HARMFUL_10,HARMFUL_11).
+out_9(HARMLESS_1) :- idb_11(HARMLESS_1).
+out_10(HARMLESS_1,HARMLESS_2) :- edb_97(HARMLESS_1,HARMLESS_2).
+idb_1(HARMLESS_1,HARMLESS_1) :- idb_4(HARMLESS_1), edb_48(HARMLESS_7,HARMLESS_8,HARMLESS_1).
+idb_1(HARMLESS_1,HARMLESS_1) :- edb_37(HARMFUL_1), idb_2(HARMLESS_1,HARMFUL_1).
+idb_1(HARMLESS_1,HARMLESS_1) :- idb_7(HARMLESS_1,HARMFUL_6,HARMFUL_7), idb_16(HARMLESS_9,HARMFUL_12,HARMFUL_7).
+idb_1(HARMLESS_1,HARMLESS_1) :- idb_2(HARMLESS_1,HARMFUL_1), idb_17(HARMLESS_10,HARMFUL_1).
+idb_13(HARMLESS_12) :- idb_13(HARMLESS_12), edb_51(HARMLESS_12).
+idb_7(HARMLESS_13,HARMFUL_16,HARMFUL_17) :- idb_7(HARMLESS_13,HARMFUL_14,HARMFUL_15), edb_52(HARMLESS_14,HARMFUL_15).
+idb_15(HARMLESS_15,HARMFUL_20,HARMFUL_21) :- edb_14(HARMFUL_19), idb_15(HARMLESS_15,HARMFUL_18,HARMFUL_19).
+idb_1(HARMLESS_16,HARMLESS_17) :- edb_65(HARMLESS_18,HARMLESS_17), idb_1(HARMLESS_16,HARMLESS_17).
+idb_11(HARMLESS_19) :- idb_11(HARMLESS_19), idb_11(HARMLESS_19).
+idb_16(HARMLESS_1,HARMFUL_22,HARMFUL_23) :- idb_6(HARMLESS_1,HARMFUL_6,HARMFUL_7).
+idb_17(HARMLESS_1,HARMLESS_2) :- idb_1(HARMLESS_1,HARMLESS_2).
+idb_18(HARMLESS_1,HARMFUL_24) :- idb_1(HARMLESS_1,HARMLESS_2).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_7(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_3(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_9(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_10(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24), edb_16(HARMLESS_21,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24), edb_29(HARMLESS_22,HARMLESS_23,HARMFUL_24).
+out_1(HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24), edb_10(HARMLESS_24,HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24), edb_87(HARMLESS_25,HARMLESS_26,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24), edb_81(HARMLESS_27,HARMFUL_24).
+out_8(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24), edb_23(HARMFUL_24).
+out_6(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24), idb_5(HARMLESS_28,HARMFUL_25,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24), idb_18(HARMLESS_29,HARMFUL_24).
+out_4(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24), idb_18(HARMLESS_30,HARMFUL_24).
+out_2(HARMLESS_1,HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24), idb_18(HARMLESS_31,HARMFUL_24).
+out_5(HARMLESS_1,HARMLESS_1) :- idb_18(HARMLESS_1,HARMFUL_24), idb_18(HARMLESS_32,HARMFUL_24).

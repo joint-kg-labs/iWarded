@@ -1,6 +1,9 @@
 package org.vadalog.iwarded.model;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
+
 
 /**
  * Copyright (C) 2021  authors: Teodoro Baldazzi, Luigi Bellomarini, Emanuel Sallinger
@@ -22,6 +25,7 @@ public class Rule {
 	private List<Literal> body;
 	private List<Condition> conditions;
 
+
 	public Rule(List<Atom> head, List<Literal> body, List<Condition> conditions) {
 		this.head = head;
 		this.body = body;
@@ -40,7 +44,7 @@ public class Rule {
 		else 
 			this.conditions = conditions;	
 	}
-	
+
 	public Rule(Atom head, Literal body, List<Condition> conditions) {
 		this.head = new LinkedList<>();
 		this.head.add(head);
@@ -51,25 +55,63 @@ public class Rule {
 		else 
 			this.conditions = conditions;
 	}
-	
+
 	public List<Literal> getLiterals() {
 		return this.body;
 	}
-	
+
 	public List<Condition> getConditions() {
 		return this.conditions;
 	}
-	
+
 	public List<Atom> getHead() {
 		return this.head;
 	}
-	
+
 	public List<Literal> getBody() {
 		return this.body;
 	}
-	
+
 	public void setBody(List<Literal> body) {
 		this.body = body;
+	}
+
+	/**
+	 * It returns the set of all the variables in the body
+	 * @return all the variables in the body
+	 */
+	public Set<Variable> getBodyVariables() {
+		Set<Variable> bodyVariables = new HashSet<>();
+		for (Literal l : this.getLiterals()) {
+			bodyVariables.addAll(l.getAtom().getVariables());
+		}
+		return bodyVariables;
+	}
+	
+	/**
+	 * It returns the list of all body atoms.
+	 * @return all the atoms in the body
+	 */
+	public List<Atom> getBodyAtomsList() {
+		return this.getBody().stream()
+				.map(Literal::getAtom)
+				.collect(Collectors.toList());
+	}
+	
+	/**
+	 * It returns the set of all the variables that appear in the conditions
+	 * of this rule.
+	 * @return the set of all the variables that appear in the conditions of this rule.
+	 */
+	public Set<Variable> getConditionsVariables() {
+		
+		Set<Variable> variablesInConditions = new HashSet<>();
+		
+		for (Condition c : this.conditions) {
+			variablesInConditions.addAll(c.getAllVariables());
+		}
+		
+		return variablesInConditions;
 	}
 
 	public String toString() {
@@ -86,16 +128,16 @@ public class Rule {
 			s.append(j.next().toString());
 			if (j.hasNext()) s.append(", ");
 		}
-		
+
 		Iterator<Condition> k = conditions.iterator();
 		if(k.hasNext())
 			s.append(", ");
-		
+
 		while(k.hasNext()) {
 			s.append(k.next().toString());
 			if (k.hasNext()) s.append(", ");
 		}
-		
+
 		s.append(".");
 		return s.toString();
 	}

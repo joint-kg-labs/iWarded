@@ -1,0 +1,79 @@
+# iWarded Scenario Configuration File (DEFAULT)
+
+# Number of Input Predicates [int >= 1]
+NumberOfInputPredicates = 1
+
+# Number of Output Predicates [int >= 1]
+NumberOfOutputPredicates = 1
+
+# Average number of Variables per Predicate [int >= 1]
+AverageVarsInPredicate = 1
+
+# Variance of Variables per Predicate [float >= 0]
+VarianceVarsInPredicate = 0
+
+# Number of Existential Rules [int >= 0]
+NumberOfExistentialRules = 0
+
+# Average number of Existentially Quantified Variables per Rule [int >= 0]
+AverageEVarsInRule = 0
+
+# Variance of Existentially Quantified Variables per Rule [float >= 0]
+VarianceEVarsInRule = 0
+
+# Number of Dangerous Rules [int >= 0]
+NumberOfDangerousRules = 0
+
+# Number of Linear Rules [int >= 1]
+NumberOfLinearRules = 1
+
+# Number of Harmless-Harmless Joins with Ward [int >= 0]
+NumberOfHarmlessHarmlessJoinsWithWard = 0
+
+# Number of Harmless-Harmless Joins without Ward [int >= 0]
+NumberOfHarmlessHarmlessJoinsWithoutWard = 0
+
+# Number of Harmless-Harmful Joins [int >= 0]
+NumberOfHarmlessHarmfulJoins = 0
+
+# Number of Harmful-Harmful Joins [int >= 0]
+NumberOfHarmfulHarmfulJoins = 0
+
+# Number of Input-Output Sequences [int >= 1]
+NumberOfInputOutputSequences = 1
+
+# Average Length of Input-Output Sequences [int >= 1]
+AverageInputOutputSequenceLength = 1
+
+# Number of Linear Recursions [int >= 0]
+NumberOfLinearRecursions = 0
+
+# Number of Left-Join Recursions [int >= 0]
+NumberOfLeftJoinRecursions = 0
+
+# Number of Right-Join Recursions [int >= 0]
+NumberOfRightJoinRecursions = 0
+
+# Number of Left-Right Join Recursions [int >= 0]
+NumberOfLeftRightJoinRecursions = 0
+
+# Average Recursion length [int >= 0]
+AverageRecursionLength = 0
+
+# Number of Selection Conditions [int >= 0]
+NumberOfSelectionConditions = 0
+
+# Average Selectivity [int >= 0]
+AverageSelectivity = 0
+
+# Number of records in CSV files [int >= 1]
+NumberOfRecordsCSV = 1
+
+# Guardedness of the Program [boolean true/false]
+IsGuarded = false
+
+# Shyness of the Program [boolean true/false]
+IsShy = false
+
+# Name of the Program
+ProgramName = defaultProgram

@@ -1,5 +1,7 @@
 package org.vadalog.iwarded.model.annotations;
 
+
+
 /**
  * An input or output annotation
  * @author luigibellomarini

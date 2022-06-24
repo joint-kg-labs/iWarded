@@ -3,6 +3,8 @@ package org.vadalog.iwarded.model.annotations;
 import java.util.HashSet;
 import java.util.Set;
 
+
+
 /**
  * The possible types for the columns in the mapping annotation
  * @author luigibellomarini

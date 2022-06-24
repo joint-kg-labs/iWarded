@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 
 import org.vadalog.iwarded.model.Constant;
 
+
+
 /**
  * It is a fact @f(c1, c2, ... cn) used in a program to define specific configurations.
  * Parameters c1, ..., cn are specific to f and positional.

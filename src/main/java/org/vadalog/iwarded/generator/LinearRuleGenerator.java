@@ -15,7 +15,7 @@ import org.vadalog.iwarded.model.Variable;
 /**
  * This class handles the generation of a linear rule in iWarded
  * 
- * @author tbaldazzi
+ * @author teodorobaldazzi
  * 
  * Copyright (C) 2021  authors: Teodoro Baldazzi, Luigi Bellomarini, Emanuel Sallinger
  * This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@ public class LinearRuleGenerator extends RuleGenerator{
 
 
 	/**
-	 * Constructor for Linear Rule
+	 * Constructor for LinearRuleGenerator
 	 * 
 	*/
 	public LinearRuleGenerator(){
@@ -46,7 +46,7 @@ public class LinearRuleGenerator extends RuleGenerator{
 
 
 	/**
-	 * It builds the body for a linear rule involved in the input-output sequence
+	 * It builds the body of a linear rule involved in the input-output sequence
 	 * 
 	 * @param lastAtomInHeadLinearSequence
 	 * @param isRoot
@@ -55,37 +55,42 @@ public class LinearRuleGenerator extends RuleGenerator{
 	public Literal createLinearBodyChaseSteps(Atom lastAtomInHeadLinearSequence, boolean isRoot){
 		Literal body;
 		Random r = new Random();
-		boolean alreadyUsedAtomName = false;
+		boolean atomAlreadyGenerated = false;
 
 		/*create body atom*/		
 		/*if this is the root of the program, the body is an edb*/
 		if(isRoot){
-			String name;
+			String inputAtomName;
 			Integer varsInAtom = 0;
 			List<Term> arguments = new ArrayList<>();
 
-			Integer indexInput = this.run.inputAtomNames.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, this.run.inputAtomNames.size());
-			name = this.run.inputAtomNames.get(indexInput);
+			int indexInput = this.run.inputAtomNames.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, this.run.inputAtomNames.size());
+			inputAtomName = this.run.inputAtomNames.get(indexInput);
 
-			/*obtain number of arguments for the atom, based on input average and variance values*/
-			alreadyUsedAtomName = this.run.inputLiteralNamesArguments.containsKey(name);
-
-			/*obtain number of arguments for the atom*/
-			if(alreadyUsedAtomName)
-				varsInAtom = this.run.inputLiteralNamesArguments.get(name);
+			/*check if the atom has already been defined previously*/
+			atomAlreadyGenerated = this.run.inputLiteralNamesNumArguments.containsKey(inputAtomName);
+			if(atomAlreadyGenerated)
+				varsInAtom = this.run.inputLiteralNamesNumArguments.get(inputAtomName);
 			else {
-				varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInAtom+this.run.averageVarsInAtom);
-				while(varsInAtom<2)		// because the root requires it for the program to work
-					varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInAtom+this.run.averageVarsInAtom);
+				/*obtain number of arguments for the atom, based on input average and variance values*/
+				varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInPredicate + this.run.averageVarsInPredicate);
+				/*counter to attempt "while"*/
+				int attemptsCounter = 3;
+				/*by construction the root requires at least two arguments*/
+				while(varsInAtom<2 && attemptsCounter>0) {
+					varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInPredicate + this.run.averageVarsInPredicate);
+					attemptsCounter--;
+				}
+				if(attemptsCounter==0)
+					varsInAtom = 2;
 			}
 			/*define each variable as argument*/
 			for(int j = 1; j <= varsInAtom; j++) {
-				Variable v;
-				v = new Variable(harmlessVariable + this.run.harmlessInstance);
+				Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
 				this.run.updateHarmlessInstance();
 				arguments.add(v);
 			}			
-			body = new Literal(name, arguments);
+			body = new Literal(inputAtomName, arguments);
 		}
 		/*otherwise, it is the idb */
 		else{
@@ -94,9 +99,9 @@ public class LinearRuleGenerator extends RuleGenerator{
 		}
 
 		/*if it is the root, update the edb data structures*/
-		if(isRoot && !alreadyUsedAtomName){
+		if(isRoot && !atomAlreadyGenerated){
 			this.run.inputLiterals.add(body);
-			this.run.inputLiteralNamesArguments.put(body.getAtom().getName(),body.getAtom().getArguments().size());
+			this.run.inputLiteralNamesNumArguments.put(body.getAtom().getName(),body.getAtom().getArguments().size());
 		}	
 
 		return body;		
@@ -105,7 +110,7 @@ public class LinearRuleGenerator extends RuleGenerator{
 
 
 	/**
-	 * It builds the body for a linear rule involved in a recursive cycle
+	 * It builds the body of a linear rule involved in a recursive cycle
 	 * 
 	 * @param lastAtomInHead
 	 * @return the built literal
@@ -117,7 +122,7 @@ public class LinearRuleGenerator extends RuleGenerator{
 
 
 	/**
-	 * It builds the body for a linear rule involved in an indirect recursive closure
+	 * It builds the body of a linear rule involved in an indirect recursive closure
 	 * 
 	 * @param rLast
 	 * @return the built literal
@@ -130,27 +135,35 @@ public class LinearRuleGenerator extends RuleGenerator{
 
 
 	/**
-	 * It builds the body for a linear rule involved in a direct recursive closure
+	 * It builds the body of a linear rule involved in a direct recursive closure
 	 * 
 	 * @return the built literal
 	 */
 	public Literal createLinearBodyDirectRecursiveClosure() {
-
 		Literal body;
 		List<Term> arguments = new ArrayList<>();
 
-		List<String> idbNames = new ArrayList<>(this.run.idbNumVariables.keySet());
-		Integer indexInput = idbNames.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, idbNames.size());
+		List<String> idbNames = new ArrayList<>(this.run.idbLiteralNamesNumArguments.keySet());
+		int indexInput = idbNames.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, idbNames.size());
 		String name = idbNames.get(indexInput);
 
 		/*the number of arguments is the one already defined for this idb*/
-		Integer varsInAtom = this.run.idbNumVariables.get(name);
-		/*create each variable*/
-		for(int j = 1; j <= varsInAtom; j++) {
-			Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
-			this.run.harmlessInstance ++;
-			arguments.add(v);
+		Integer varsInAtom = this.run.idbLiteralNamesNumArguments.get(name);	
+		Integer harmfulVarsInAtom = 0;
+		/*get possible number of affected positions in the atom*/
+		if(this.run.affectedAtomNames.contains(name))
+			harmfulVarsInAtom = this.run.numAffectedPositionsPerAtom.get(name);
+		/*define each harmless variable as argument*/
+		for(int j = 1; j <= varsInAtom-harmfulVarsInAtom; j++) {
+			arguments.add(new Variable(harmlessVariable + this.run.harmlessInstance));
+			this.run.updateHarmlessInstance();
 		}
+		/*define each harmful variable as argument*/
+		for(int j = 1; j <= harmfulVarsInAtom; j++) {
+			arguments.add(new Variable(harmfulVariable + this.run.harmfulInstance));
+			this.run.updateHarmfulInstance();
+		}
+		
 		body = new Literal(name, arguments);
 
 		/*save the literal to build the head*/
@@ -163,7 +176,7 @@ public class LinearRuleGenerator extends RuleGenerator{
 	
 	
 	/**
-	 * It builds the body for a linear rule involved in the secondary branch
+	 * It builds the body of a linear rule involved in the secondary branch
 	 * 
 	 * @param firstExistentialHead
 	 * @return the built literal	 
@@ -175,19 +188,19 @@ public class LinearRuleGenerator extends RuleGenerator{
 	
 	
 	/**
-	 * It builds the body for a linear rule involved in a tertiary branch
+	 * It builds the body of a linear rule involved in a tertiary branch
 	 * 
 	 * @param firstExistentialHead
 	 * @return the built literal	 
 	 */
-	public Literal createLinearBodyTertiaryRule(Atom firstExistentialHead) {
-		return this.createLinearBodyChaseSteps(firstExistentialHead, false);
+	public Literal createLinearBodyTertiaryRule(Atom firstHead) {
+		return this.createLinearBodyChaseSteps(firstHead, false);
 	}
 
 
-	
+
 	/**
-	 * It builds the body for a linear rule involved in an output closure
+	 * It builds the body of a linear rule involved in an output closure
 	 * 
 	 * @param lastAtomBeforeOutput
 	 * @return the built literal
@@ -195,5 +208,17 @@ public class LinearRuleGenerator extends RuleGenerator{
 	public Literal createLinearBodyOutputRule(Atom lastAtomBeforeOutput){
 		return this.createLinearBodyChaseSteps(lastAtomBeforeOutput, false);		
 	}
+
+
+
+	/**
+	 * It builds the head of a linear rule involved in the secondary branch
+	 * 
+	 * @param body
+	 * @return the built literal
+	 */
+	public Atom createHeadSecondaryRule(List<Literal> body) {
+		return this.createHeadChaseSteps(body, false, false, false);
+	}	
 
 }

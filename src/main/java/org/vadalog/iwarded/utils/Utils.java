@@ -4,9 +4,11 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+
+
 /**
- * This class contains useful methods for iWarded
- * @author tbaldazzi
+ * This class contains additional useful methods for iWarded
+ * @author teodorobaldazzi
  * 
  * Copyright (C) 2021  authors: Teodoro Baldazzi, Luigi Bellomarini, Emanuel Sallinger
  * This program is free software: you can redistribute it and/or modify

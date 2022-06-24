@@ -17,7 +17,7 @@ import org.vadalog.iwarded.model.Variable;
 /**
  * This class handles the generation of a join rule in iWarded
  * 
- * @author tbaldazzi
+ * @author teodorobaldazzi
  * 
  * Copyright (C) 2021  authors: Teodoro Baldazzi, Luigi Bellomarini, Emanuel Sallinger
  * This program is free software: you can redistribute it and/or modify
@@ -38,13 +38,13 @@ public class JoinRuleGenerator extends RuleGenerator{
 	private final static String joinWithEdb = "joinWithEdb";
 	private final static String joinWithIdb = "joinWithIdb";
 
-	private final static String nonLinRecJoinSameIdb = "sameIdb";
-	private final static String nonLinRecJoinDifferentIdb = "differentIdb";
+	private final static String joinSameIdb = "sameIdb";
+	private final static String joinDifferentIdb = "differentIdb";
 
 
 	/**
-	 * Constructor for JoinRule
-	*/
+	 * Constructor for JoinRuleGenerator
+	 */
 	public JoinRuleGenerator(){
 		super();
 	}
@@ -68,23 +68,23 @@ public class JoinRuleGenerator extends RuleGenerator{
 
 
 	/**
-	 * It randomly chooses whether the current non-linear join will be 
-	 * between the same idb atoms or two distinct ones	 
+	 * It randomly chooses whether the current join will be 
+	 * between instances of the same idb atom or two distinct ones	 
 	 *  
-	 * @return whether the non-linear join is with the same idb or a different one
+	 * @return whether the join is with the same idb or a different one
 	 */
-	private String nonLinearJoinWithSameOrDifferentIdb() {
+	private String joinWithSameOrDifferentIdb() {
 		int sameOrDifferentIdb = ThreadLocalRandom.current().nextInt(0, 1 + 1);
 		if(sameOrDifferentIdb == 0)
-			return nonLinRecJoinSameIdb;
+			return joinSameIdb;
 		else
-			return nonLinRecJoinDifferentIdb;
+			return joinDifferentIdb;
 	}
 
 
 
 	/**
-	 * It builds the body for a join rule involved in the input-output sequence
+	 * It builds the body of a join rule involved in the input-output sequence
 	 * 
 	 * @param lastAtomInHead
 	 * @param typeOfJoin
@@ -95,142 +95,169 @@ public class JoinRuleGenerator extends RuleGenerator{
 		Random r = new Random();
 		List<Literal> body = new ArrayList<>();
 
-		/*create LEFT body atom - last IDB in head*/
-		Literal left = new Literal(lastAtomInHead,true);
+		/*create LEFT body atom - last idb in head*/
+		Literal left = new Literal(lastAtomInHead, true);
 		body.add(left);
 		List<Term> argumentsLeft = lastAtomInHead.getArguments();
 
-		Integer harmfulVarsInAtom = 0;
-		if(this.run.affectedAtomNames.contains(lastAtomInHead.getName()))
-			harmfulVarsInAtom = this.run.numAffectedPositionsPerAtom.get(lastAtomInHead.getName());
-
-		/*define which variable is the join variable*/
-		Variable joinVariable = null;	
+		/*decide which variable is the join variable*/
 		/*the type of join influences this choice*/
-		/*harmless joins require harmless join variables*/
+		Variable joinVariable = null;	
+		/*harmless joins require a harmless join variable*/
+		/*by construction, the first variable is always harmless*/
 		if(typeOfJoin.equals(ModelGenerator.joinhhW) || typeOfJoin.equals(ModelGenerator.joinhhNW))
-			if(run.affectedAtomNames.contains(lastAtomInHead.getName()))
-				joinVariable = (Variable) argumentsLeft.get(argumentsLeft.size()-harmfulVarsInAtom);
-			else
-				joinVariable = (Variable) argumentsLeft.get(argumentsLeft.size()-1);
+			joinVariable = (Variable) argumentsLeft.get(0);
 		else
-			/*harmful joins require harmful join variables*/
+			/*harmful joins require a harmful join variable*/
+			/*by construction, if the atom is affected, the last variable is always harmful*/
 			if(typeOfJoin.equals(ModelGenerator.joinhH) || typeOfJoin.equals(ModelGenerator.joinHH))
-				joinVariable = (Variable) argumentsLeft.get(argumentsLeft.size()-1);
+				joinVariable = (Variable) argumentsLeft.get(argumentsLeft.size()-1);	
 
 
-		/*create RIGHT body atom - EDB or IDB*/
+		/*create RIGHT body atom - edb or idb*/
+		Literal right;
+		String inputAtomName = null;
+		List<Term> argumentsRight = new ArrayList<>();
+
+		/*decide whether the join is with edb or idb*/
+		/*the type of join and the possible guardedness requirement influence this choice*/
 		String edbOrIdb = null;
-		/*the type of join  and the possible Guardedness requirement influence this choice*/
 		/*with harmless joins the choice is random*/
 		if((typeOfJoin.equals(ModelGenerator.joinhhW) || typeOfJoin.equals(ModelGenerator.joinhhNW)) && !isGuarded)
 			edbOrIdb = this.joinWithEdbOrIdb();
 		else
 			/*with harmless-harmful joins it is required to have an edb as right atom*/
 			if(typeOfJoin.equals(ModelGenerator.joinhH) || isGuarded)
-				edbOrIdb = JoinRuleGenerator.joinWithEdb;
+				edbOrIdb = joinWithEdb;
 			else
 				/*with harmful-harmful joins it is required to have an idb as right atom*/
 				if(typeOfJoin.equals(ModelGenerator.joinHH))
-					edbOrIdb = JoinRuleGenerator.joinWithIdb;
-
-		String name;
-		Integer varsInAtom = 0;
-		List<Term> argumentsRight = new ArrayList<>();
-		Literal right;
-
+					edbOrIdb = joinWithIdb;
 
 		/*build the atom based on the previous choice*/
-		if(edbOrIdb.equals(JoinRuleGenerator.joinWithEdb)){
-			Integer indexInput = this.run.inputAtomNames.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, this.run.inputAtomNames.size());
-			name = this.run.inputAtomNames.get(indexInput);
+		Integer varsInAtom = 0;
 
-			boolean alreadyUsedAtomName = this.run.inputLiteralNamesArguments.containsKey(name);
+		if(edbOrIdb.equals(joinWithEdb)){
+			int indexInput = this.run.inputAtomNames.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, this.run.inputAtomNames.size());
+			inputAtomName = this.run.inputAtomNames.get(indexInput);
 
-			/*obtain number of arguments for the atom*/
-			if(alreadyUsedAtomName) {
-				varsInAtom = this.run.inputLiteralNamesArguments.get(name);
-				/*if isGuarded, the atom has to be with a single argument or new*/
+			/*check if the atom has already been defined previously*/
+			boolean atomAlreadyGenerated = this.run.inputLiteralNamesNumArguments.containsKey(inputAtomName);
+			if(atomAlreadyGenerated) {
+				varsInAtom = this.run.inputLiteralNamesNumArguments.get(inputAtomName);
+				/*if isGuarded, the atom has to be with a single argument (or new, as in the "else" case)*/
 				/*to avoid variables different from the ones in the left atom and respect guardedness*/
 				if(isGuarded && varsInAtom!=1) {
-					name = this.run.inputAtomNameForGuarded;
-					varsInAtom = this.run.inputLiteralNamesArguments.get(name);
+					inputAtomName = this.run.inputAtomNameForGuarded;
+					varsInAtom = this.run.inputLiteralNamesNumArguments.get(inputAtomName);
 				}
 			}
-			else { //!alreadyUsedAtomName
+			else {
 				/*obtain number of arguments for the atom, based on input average and variance values*/
 				if(!isGuarded) {
-					varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInAtom+this.run.averageVarsInAtom);
-					while(varsInAtom<1)
-						varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInAtom+this.run.averageVarsInAtom);
+					varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInPredicate + this.run.averageVarsInPredicate);
+					/*counter to attempt "while"*/
+					int attemptsCounter = 3;
+					while(varsInAtom<1 && attemptsCounter>0) {
+						varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInPredicate + this.run.averageVarsInPredicate);
+						attemptsCounter--;
+					}
+					if(attemptsCounter==0)
+						varsInAtom = 2;
 				}
 				/*if isGuarded, here the only variable is the join one to fulfill the guardedness requirement without changing left atom*/
 				else
 					varsInAtom = 1;
 			}
 
-			/*create each variable*/
+			/*define each variable as argument*/
 			for(int j = 1; j <= varsInAtom-1; j++) {
-				Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
-				this.run.harmlessInstance ++;
-				argumentsRight.add(v);
+				argumentsRight.add(new Variable(harmlessVariable + this.run.harmlessInstance));
+				this.run.updateHarmlessInstance();
+
 			}
 			/*add join variable*/
 			argumentsRight.add(joinVariable);
 
 			/*create the new atom with these arguments*/
-			right = new Literal(name, argumentsRight);
+			right = new Literal(inputAtomName, argumentsRight);
 
 			/*update the edb data structures, if needed*/
-			if(!alreadyUsedAtomName) {
+			if(!atomAlreadyGenerated) {
 				this.run.inputLiterals.add(right);
-				this.run.inputLiteralNamesArguments.put(name,varsInAtom);
+				this.run.inputLiteralNamesNumArguments.put(inputAtomName,varsInAtom);
 			}
 		}
 
-
 		else{	 // joinWithIdb
-			List<String> idbNames = new ArrayList<>(this.run.idbNumVariables.keySet());
-			Integer indexInput = idbNames.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, idbNames.size());
-			name = idbNames.get(indexInput);
-			/*get number of arguments from the previous creation of the atom*/
-			varsInAtom = this.run.idbNumVariables.get(name);
-			harmfulVarsInAtom = 0;
-			if(this.run.affectedAtomNames.contains(name))
-				harmfulVarsInAtom = this.run.numAffectedPositionsPerAtom.get(name);
+			/*decide whether the join is with the same idb or a distinct one*/
+			/*the type of join does not influence this choice*/
+			String sameOrDifferentIdb = this.joinWithSameOrDifferentIdb();
 
-			/*the type of join influences the creation of arguments*/
-			if((typeOfJoin.equals(ModelGenerator.joinhhW) || typeOfJoin.equals(ModelGenerator.joinhhNW))
-					&& this.run.affectedAtomNames.contains(name)){
-				/*create each harmless variable*/
-				for(int j = 1; j <= varsInAtom-(harmfulVarsInAtom+1); j++) {
-					Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
-					this.run.harmlessInstance ++;
-					argumentsRight.add(v);
+			/*if same idb, use the left atom just created*/
+			if(sameOrDifferentIdb.equals(joinSameIdb)) {
+				inputAtomName = left.getAtom().getName();
+				varsInAtom = left.getAtom().getArguments().size();
+			}
+			/*if different idb, select an idb already defined*/
+			else { //joinDifferentIdb
+				/*select an idb as right atom among the ones already defined*/
+				/*the type of join influences this choice*/
+				List<String> idbNames;
+				/*with harmless-harmless joins it is not required to choose an atom with affected positions*/
+				if(typeOfJoin.equals(ModelGenerator.joinhhW) || typeOfJoin.equals(ModelGenerator.joinhhNW)) {
+					/*choose atom among the idb ones already generated*/
+					idbNames = new ArrayList<>(this.run.idbLiteralNamesNumArguments.keySet());
 				}
-				/*add join variable*/
+				/*with harmful-harmful joins it is required to choose an atom with affected positions*/
+				else {	//joinHH, as joinhH can only be with edb by construction
+					/*choose atom among the idb ones already generated which are affected*/
+					idbNames = new ArrayList<>(this.run.affectedAtomNames);
+				}
+				int indexInput = idbNames.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, idbNames.size());
+				inputAtomName = idbNames.get(indexInput);
+				/*get number of arguments from the previous creation of the atom*/
+				varsInAtom = this.run.idbLiteralNamesNumArguments.get(inputAtomName);
+			}
+
+			/*get possible number of affected positions in the atom*/
+			Integer harmfulVarsInAtom = 0;
+			if(this.run.affectedAtomNames.contains(inputAtomName))
+				harmfulVarsInAtom = this.run.numAffectedPositionsPerAtom.get(inputAtomName);
+
+			/*the type of join influences the order of the variables*/
+			if(harmfulVarsInAtom!=0 && 
+					(typeOfJoin.equals(ModelGenerator.joinhhW) || typeOfJoin.equals(ModelGenerator.joinhhNW))){
+				/*add join variable in first position, as it is harmless by construction*/
 				argumentsRight.add(joinVariable);
-				/*create each harmful variable*/
+				/*define each harmless variable as argument*/
+				for(int j = 1; j <= varsInAtom-1-harmfulVarsInAtom; j++) {
+					argumentsRight.add(new Variable(harmlessVariable + this.run.harmlessInstance));
+					this.run.updateHarmlessInstance();
+				}
+				/*define each harmful variable as argument*/
 				for(int j = 1; j <= harmfulVarsInAtom; j++) {
-					Variable v = new Variable(harmfulVariable + this.run.harmfulInstance);
-					this.run.harmfulInstance ++;
-					argumentsRight.add(v);
+					argumentsRight.add(new Variable(harmfulVariable + this.run.harmfulInstance));
+					this.run.updateHarmfulInstance();
 				}
 			}
-
 			else{
-				/*create each variable*/
-				for(int j = 1; j <= varsInAtom-1; j++) {
-					Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
-					this.run.harmlessInstance ++;
-					argumentsRight.add(v);
+				/*define each harmless variable as argument*/
+				for(int j = 1; j <= varsInAtom-harmfulVarsInAtom; j++) {
+					argumentsRight.add(new Variable(harmlessVariable + this.run.harmlessInstance));
+					this.run.updateHarmlessInstance();
 				}
-				/*add join variable*/
+				/*define each harmful variable as argument*/
+				for(int j = 1; j <= harmfulVarsInAtom; j++) {
+					argumentsRight.add(new Variable(harmfulVariable + this.run.harmfulInstance));
+					this.run.updateHarmfulInstance();
+				}
+				/*add join variable in last position*/
+				argumentsRight.remove(argumentsRight.size()-1);
 				argumentsRight.add(joinVariable);
 			}
-
 			/*create the new atom with these arguments*/
-			right = new Literal(name, argumentsRight);
+			right = new Literal(inputAtomName, argumentsRight);
 		}
 
 		body.add(right);
@@ -241,7 +268,7 @@ public class JoinRuleGenerator extends RuleGenerator{
 
 
 	/**
-	 * It builds the body for a join rule involved in a recursive cycle
+	 * It builds the body of a join rule involved in a recursive cycle
 	 * 
 	 * @param lastAtomInHead
 	 * @param typeOfJoin
@@ -255,7 +282,7 @@ public class JoinRuleGenerator extends RuleGenerator{
 
 
 	/**
-	 * It builds the body for a join rule involved in an indirect recursive closure
+	 * It builds the body of a join rule involved in an indirect recursive closure
 	 * 
 	 * @param rLast
 	 * @param typeOfJoin
@@ -268,66 +295,71 @@ public class JoinRuleGenerator extends RuleGenerator{
 		Random r = new Random();
 		List<Literal> body = new ArrayList<>();
 
-		/*create LEFT body atom - last IDB in head which completes recursive cycle*/
+		/*create LEFT body atom - last idb in head which closes recursive sequence*/
 		Literal left = new Literal(rLast,true);
 		body.add(left);
 		List<Term> argumentsLeft = rLast.getArguments();
 
-		/*define which variable is the join variable*/
-		Variable joinVariable = null;	
+		/*decide which variable is the join variable*/
 		/*the type of join influences this choice*/
-		/*harmless joins require harmless join variables*/
+		Variable joinVariable = null;
+		/*harmless joins require a harmless join variable*/
+		/*by construction, the first variable is always harmless*/
 		if(typeOfJoin.equals(ModelGenerator.joinhhW) || typeOfJoin.equals(ModelGenerator.joinhhNW))
-			if(run.affectedAtomNames.contains(rLast.getName()))
-				joinVariable = (Variable) argumentsLeft.get(argumentsLeft.size()-2);
-			else
-				joinVariable = (Variable) argumentsLeft.get(argumentsLeft.size()-1);
+			joinVariable = (Variable) argumentsLeft.get(0);
 		else
-			/*harmful joins require harmful join variables*/
+			/*harmful joins require a harmful join variable*/
+			/*by construction, if the atom is affected, the last variable is always harmful*/
 			if(typeOfJoin.equals(ModelGenerator.joinhH) || typeOfJoin.equals(ModelGenerator.joinHH))
-				joinVariable = (Variable) argumentsLeft.get(argumentsLeft.size()-1);
+				joinVariable = (Variable) argumentsLeft.get(argumentsLeft.size()-1);	
 
 
-		/*create RIGHT body atom - EDB or IDB*/
+		/*create RIGHT body atom - edb or idb*/
 		Literal right;
-		String name;
+		String name = null;
+		List<Term> argumentsRight = new ArrayList<>();	
+
+		/*decide whether the join is with edb or idb and build the atom*/
+		/*the type of recursion influences this choice*/
 		Integer varsInAtom = 0;
-		List<Term> argumentsRight = new ArrayList<>();
-
-		/*the type of join influences this choice*/
+		/*with left or right recursive joins it is required to have an edb as right atom, to avoid additional recursive closures*/
 		if(typeOfRecJoin.equals(leftRecJoin) || typeOfRecJoin.equals(rightRecJoin)){
-			Integer indexInput = this.run.inputAtomNames.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, this.run.inputAtomNames.size());
-			name = this.run.inputAtomNames.get(indexInput);
+			int indexInput = this.run.inputAtomNames.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, this.run.inputAtomNames.size());
+			name = this.run.inputAtomNames.get(indexInput);			
 
-			boolean alreadyUsedAtomName = this.run.inputLiteralNamesArguments.containsKey(name);
-
-			/*obtain number of arguments for the atom*/
-			if(alreadyUsedAtomName) {
-				varsInAtom = this.run.inputLiteralNamesArguments.get(name);
+			/*check if the atom has already been defined previously*/
+			boolean atomAlreadyGenerated = this.run.inputLiteralNamesNumArguments.containsKey(name);			
+			if(atomAlreadyGenerated) {
+				varsInAtom = this.run.inputLiteralNamesNumArguments.get(name);
 				/*if isGuarded, the atom has to be with a single argument or new*/
 				/*to avoid variables different from the ones in the left atom and respect guardedness*/
 				if(isGuarded && varsInAtom!=1) {
 					name = this.run.inputAtomNameForGuarded;
-					varsInAtom = this.run.inputLiteralNamesArguments.get(name);
+					varsInAtom = this.run.inputLiteralNamesNumArguments.get(name);
 				}
 			}
-			else { //!alreadyUsedAtomName
+			else {
 				/*obtain number of arguments for the atom, based on input average and variance values*/
 				if(!isGuarded) {
-					varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInAtom+this.run.averageVarsInAtom);
-					while(varsInAtom<1)
-						varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInAtom+this.run.averageVarsInAtom);
+					varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInPredicate + this.run.averageVarsInPredicate);
+					/*counter to attempt "while"*/
+					int attemptsCounter = 3;
+					while(varsInAtom<1 && attemptsCounter>0) {
+						varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInPredicate + this.run.averageVarsInPredicate);
+						attemptsCounter--;
+					}
+					if(attemptsCounter==0)
+						varsInAtom = 2;
 				}
 				/*if isGuarded, here the only variable is the join one to fulfill the guardedness requirement without changing left atom*/
 				else
 					varsInAtom = 1;
 			}
 
-			/*create each variable*/
+			/*define each variable as argument*/
 			for(int j = 1; j <= varsInAtom-1; j++) {
-				Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
-				this.run.harmlessInstance ++;
-				argumentsRight.add(v);
+				argumentsRight.add(new Variable(harmlessVariable + this.run.harmlessInstance));
+				this.run.updateHarmlessInstance();
 			}
 			/*add join variable*/
 			argumentsRight.add(joinVariable);
@@ -336,96 +368,105 @@ public class JoinRuleGenerator extends RuleGenerator{
 			right = new Literal(name, argumentsRight);
 
 			/*update the edb data structures, if needed*/
-			if(!alreadyUsedAtomName) {
+			if(!atomAlreadyGenerated) {
 				this.run.inputLiterals.add(right);
-				this.run.inputLiteralNamesArguments.put(name,varsInAtom);
+				this.run.inputLiteralNamesNumArguments.put(name,varsInAtom);
 			}
-
-			body.add(right);
 		}
-		else{	// nonLinearRecJoin
-			String sameOrDifferentIdb = this.nonLinearJoinWithSameOrDifferentIdb();
-			if(sameOrDifferentIdb.equals(nonLinRecJoinSameIdb)){
+
+		/*with left-right recursive joins it is required to have an idb as right atom*/
+		else{	// leftRightRecJoin
+			/*decide whether the join is with the same idb or a distinct one*/
+			/*the type of join does not influence this choice*/
+			String sameOrDifferentIdb = this.joinWithSameOrDifferentIdb();
+			Integer harmfulVarsInAtom = 0;
+
+			/*if same idb, use the left atom just created*/
+			if(sameOrDifferentIdb.equals(joinSameIdb)){
 				name = left.getAtom().getName();
 				varsInAtom = left.getAtom().getArguments().size();
-
-				/*harmless joins require harmless join variables*/
-				if((typeOfJoin.equals(ModelGenerator.joinhhW) || typeOfJoin.equals(ModelGenerator.joinhhNW))
-						&& this.run.affectedAtomNames.contains(name)){
-					/*create each harmless variable*/
-					for(int j = 1; j <= varsInAtom-2; j++) {
-						Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
-						this.run.harmlessInstance ++;
-						argumentsRight.add(v);
-					}
-					/*add join variable*/
-					argumentsRight.add(joinVariable);
-					/*add remaining harmless variables*/
-					argumentsRight.add(new Variable(harmlessVariable + this.run.harmlessInstance));
-					this.run.harmlessInstance ++;
-				}
-
-				else{
-					/*harmful joins require harmful join variables*/
-					for(int j = 1; j <= varsInAtom-1; j++) {
-						Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
-						this.run.harmlessInstance ++;
-						argumentsRight.add(v);
-					}
-					/*add join variable*/
-					argumentsRight.add(joinVariable);
-				}
-
-				/*create the new atom with these arguments*/
-				right = new Literal(name, argumentsRight);
-
-				/*update data structure to link non-linear join to main program*/
-				this.run.bodyRuleForIndNonLinRecJoinRightAtom.remove(recName);
+				/*get possible number of affected positions in the atom*/
+				if(this.run.affectedAtomNames.contains(name))
+					harmfulVarsInAtom = this.run.numAffectedPositionsPerAtom.get(name);
 			}
-
-			else{	// nonLinRecJoinDifferentIdb
+			/*if different idb, define new idb*/
+			else { //joinDifferentIdb
+				/*define a new idb, to avoid additional recursive closure of defined previously ones*/
 				name = "idb_" + this.run.idbInstance;
-				this.run.updateIdbInstance();;
-
+				this.run.updateIdbInstance();				
 				/*obtain number of arguments for the atom*/
-				varsInAtom = this.run.bodyRuleForIndNonLinRecJoinRightAtom.get(recName).getArguments().size();			
-
-				/*harmless joins require harmless join variables*/
-				if((typeOfJoin.equals(ModelGenerator.joinhhW) || typeOfJoin.equals(ModelGenerator.joinhhNW))
-						&& this.run.affectedAtomNames.contains(name)){
-					/*create each variable*/
-					for(int j = 1; j <= varsInAtom-2; j++) {
-						Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
-						this.run.harmlessInstance ++;
-						argumentsRight.add(v);
+				Atom indLeftRightRecJoinBodyAtom = this.run.indLeftRightRecJoinBodyAtoms.get(recName);
+				varsInAtom = indLeftRightRecJoinBodyAtom.getArguments().size();
+				/*get possible number of affected positions in the body atom which will link the new one to the program*/
+				if(this.run.affectedAtomNames.contains(indLeftRightRecJoinBodyAtom.getName()))
+					harmfulVarsInAtom = this.run.numAffectedPositionsPerAtom.get(indLeftRightRecJoinBodyAtom.getName());
+				/*with harmful-harmful join the new atom is required to have at least one harmful variable*/
+				if(typeOfJoin.equals(ModelGenerator.joinHH) && harmfulVarsInAtom==null) {
+					/*counter to attempt "while"*/
+					int attemptsCounter = 3;
+					while((harmfulVarsInAtom<1 || harmfulVarsInAtom>varsInAtom-1) && attemptsCounter>0) {
+						harmfulVarsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceEVarsInRule + this.run.averageEVarsInRule);
+						attemptsCounter--;
 					}
-					/*add join variable*/
-					argumentsRight.add(joinVariable);
-					/*add remaining harmless variables*/
-					argumentsRight.add(new Variable(harmlessVariable + this.run.harmlessInstance));
-					this.run.harmlessInstance ++;
+					if(attemptsCounter==0)
+						harmfulVarsInAtom = 1;
 				}
-				else{
-					/*harmful joins require harmful join variables*/
-					for(int j = 1; j <= varsInAtom-1; j++) {
-						Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
-						this.run.harmlessInstance ++;
-						argumentsRight.add(v);
-					}
-					/*add join variable*/
-					argumentsRight.add(joinVariable);
+				/*update the affected positions data structures*/
+				if(harmfulVarsInAtom!=0) {
+					this.run.affectedAtomNames.add(name);
+					this.run.numAffectedPositionsPerAtom.put(name, harmfulVarsInAtom);
 				}
-
-				/*create the new atom with these arguments*/
-				right = new Literal(name, argumentsRight);
-
-				/*update data structure to link non-linear join to main program*/
-				this.run.recNonLinIndJoinRightAtom.put(recName,right.getAtom());
-
+				/*update sequence data structures*/
+				this.run.idbLiteralNamesNumArguments.put(name, varsInAtom);				
 			}
-			body.add(right);
+
+			/*the type of join influences the order of the variables*/
+			if(//harmfulVarsInAtom!=0 && 
+					(typeOfJoin.equals(ModelGenerator.joinhhW) || typeOfJoin.equals(ModelGenerator.joinhhNW))){
+				/*add join variable in first position, as it is harmless by construction*/
+				argumentsRight.add(joinVariable);
+				/*define each harmless variable as argument*/
+				for(int j = 1; j <= varsInAtom-1-harmfulVarsInAtom; j++) {
+					argumentsRight.add(new Variable(harmlessVariable + this.run.harmlessInstance));
+					this.run.updateHarmlessInstance();
+				}
+				/*define each harmful variable as argument*/
+				for(int j = 1; j <= harmfulVarsInAtom; j++) {
+					argumentsRight.add(new Variable(harmfulVariable + this.run.harmfulInstance));
+					this.run.updateHarmfulInstance();
+				}
+			}
+			else{ //harmfulVarsInAtom==0 || joinHH
+				/*define each harmless variable as argument*/
+				for(int j = 1; j <= varsInAtom-harmfulVarsInAtom; j++) {
+					argumentsRight.add(new Variable(harmlessVariable + this.run.harmlessInstance));
+					this.run.updateHarmlessInstance();
+				}
+				/*define each harmful variable as argument*/
+				for(int j = 1; j <= harmfulVarsInAtom; j++) {
+					argumentsRight.add(new Variable(harmfulVariable + this.run.harmfulInstance));
+					this.run.updateHarmfulInstance();
+				}
+				/*add join variable in last position*/
+				argumentsRight.remove(argumentsRight.size()-1);
+				argumentsRight.add(joinVariable);
+			}
+
+			/*create the new atom with these arguments*/
+			right = new Literal(name, argumentsRight);
+
+			/*update data structure to link non-linear join to main program*/
+			if(sameOrDifferentIdb.equals(joinSameIdb)){
+				/*remove current rec from non linear ones because there is no need to add a new rule*/
+				/*to link the right atom to the main body of the program*/
+				this.run.indLeftRightRecJoinBodyAtoms.remove(recName);
+			}
+			else { //joinDifferentIdb
+				this.run.indLeftRightRecJoinHeadAtoms.put(recName,right.getAtom());
+			}
 		}
 
+		body.add(right);
 		/*if it is a right recursion, invert the order of the atoms in the body*/
 		if(typeOfRecJoin.equals(rightRecJoin))
 			return IntStream.range(0, body.size())
@@ -439,7 +480,7 @@ public class JoinRuleGenerator extends RuleGenerator{
 
 
 	/**
-	 * It builds the body for a join rule involved in a direct recursive closure
+	 * It builds the body of a join rule involved in a direct recursive closure
 	 * 
 	 * @param typeOfJoin
 	 * @param typeOfRecJoin
@@ -452,21 +493,28 @@ public class JoinRuleGenerator extends RuleGenerator{
 		List<Literal> body = new ArrayList<>();
 
 		String name;
-		Integer varsInAtom = 0;
+		List<Term> argumentsLeft = new ArrayList<>();
 
-		/*create LEFT body atom - last IDB in head which completes recursive cycle*/
-		List<String> idbNames = new ArrayList<>(this.run.idbNumVariables.keySet());
-		Integer indexInput = idbNames.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, idbNames.size());
+		/*create LEFT body atom - last idb in head which completes recursive cycle*/
+		List<String> idbNames = new ArrayList<>(this.run.idbLiteralNamesNumArguments.keySet());
+		int indexInput = idbNames.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, idbNames.size());
 		name = idbNames.get(indexInput);
 
-		/*get arguments from previous creation of the atom*/
-		List<Term> argumentsLeft = new ArrayList<>();
-		varsInAtom = this.run.idbNumVariables.get(name);
-		/*create each variable*/
-		for(int j = 1; j <= varsInAtom; j++) {
-			Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
-			this.run.harmlessInstance ++;
-			argumentsLeft.add(v);
+		/*the number of arguments is the one already defined for this idb*/
+		Integer varsInAtom = this.run.idbLiteralNamesNumArguments.get(name);	
+		Integer harmfulVarsInAtom = 0;
+		/*get possible number of affected positions in the atom*/
+		if(this.run.affectedAtomNames.contains(name))
+			harmfulVarsInAtom = this.run.numAffectedPositionsPerAtom.get(name);
+		/*define each harmless variable as argument*/
+		for(int j = 1; j <= varsInAtom-harmfulVarsInAtom; j++) {
+			argumentsLeft.add(new Variable(harmlessVariable + this.run.harmlessInstance));
+			this.run.updateHarmlessInstance();
+		}
+		/*define each harmful variable as argument*/
+		for(int j = 1; j <= harmfulVarsInAtom; j++) {
+			argumentsLeft.add(new Variable(harmfulVariable + this.run.harmfulInstance));
+			this.run.updateHarmfulInstance();
 		}
 
 		Literal left = new Literal(name, argumentsLeft);
@@ -475,59 +523,81 @@ public class JoinRuleGenerator extends RuleGenerator{
 		/*update current direct recursive literal*/
 		this.run.literalDirectRec = left;
 
-		/*define which variable is the join variable*/
-		Variable joinVariable = null;	
+		/*decide which variable is the join variable*/
 		/*the type of join influences this choice*/
-		/*harmless joins require harmless join variables*/
+		Variable joinVariable = null;
+		/*harmless joins require a harmless join variable*/
+		/*by construction, the first variable is always harmless*/
 		if(typeOfJoin.equals(ModelGenerator.joinhhW) || typeOfJoin.equals(ModelGenerator.joinhhNW))
-			if(run.affectedAtomNames.contains(name))
-				joinVariable = (Variable) argumentsLeft.get(argumentsLeft.size()-2);
-			else
-				joinVariable = (Variable) argumentsLeft.get(argumentsLeft.size()-1);
+			joinVariable = (Variable) argumentsLeft.get(0);
 		else
-			/*harmful joins require harmful join variables*/
+			/*harmful joins require a harmful join variable*/
+			/*by construction, if the atom is affected, the last variable is always harmful*/
 			if(typeOfJoin.equals(ModelGenerator.joinhH) || typeOfJoin.equals(ModelGenerator.joinHH))
-				joinVariable = (Variable) argumentsLeft.get(argumentsLeft.size()-1);
+				joinVariable = (Variable) argumentsLeft.get(argumentsLeft.size()-1);	
 
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 
-		/*create RIGHT body atom - EDB or IDB*/
+		/*create RIGHT body atom - edb or idb*/
 		Literal right;
 		List<Term> argumentsRight = new ArrayList<>();
 
-		/*the type of join influences this choice*/
+		/*decide whether the join is with edb or idb and build the atom*/
+		/*the type of recursion influences this choice*/
+		varsInAtom = 0;
+		/*with left or right recursive joins it is required to have an edb as right atom, to avoid additional recursive closures*/
 		if(typeOfRecJoin.equals(leftRecJoin) || typeOfRecJoin.equals(rightRecJoin)){			
 			indexInput = this.run.inputAtomNames.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, this.run.inputAtomNames.size());
 			name = this.run.inputAtomNames.get(indexInput);
 
-			boolean alreadyUsedAtomName = this.run.inputLiteralNamesArguments.containsKey(name);
-
-			/*obtain number of arguments for the atom*/
-			if(alreadyUsedAtomName) {
-				varsInAtom = this.run.inputLiteralNamesArguments.get(name);
+			/*check if the atom has already been defined previously*/
+			boolean atomAlreadyGenerated = this.run.inputLiteralNamesNumArguments.containsKey(name);
+			if(atomAlreadyGenerated) {
+				varsInAtom = this.run.inputLiteralNamesNumArguments.get(name);
 				/*if isGuarded, the atom has to be with a single argument or new*/
 				/*to avoid variables different from the ones in the left atom and respect guardedness*/
 				if(isGuarded && varsInAtom!=1) {
 					name = this.run.inputAtomNameForGuarded;
-					varsInAtom = this.run.inputLiteralNamesArguments.get(name);
+					varsInAtom = this.run.inputLiteralNamesNumArguments.get(name);
 				}
 			}
-			else { //!alreadyUsedAtomName
+			else {
 				/*obtain number of arguments for the atom, based on input average and variance values*/
 				if(!isGuarded) {
-					varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInAtom+this.run.averageVarsInAtom);
-					while(varsInAtom<1)
-						varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInAtom+this.run.averageVarsInAtom);
+					varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInPredicate+this.run.averageVarsInPredicate);
+					/*counter to attempt "while"*/
+					int attemptsCounter = 3;
+					while(varsInAtom<1 && attemptsCounter>0) {
+						varsInAtom = (int) Math.round(r.nextGaussian()*this.run.varianceVarsInPredicate+this.run.averageVarsInPredicate);
+						attemptsCounter--;
+					}
+					if(attemptsCounter==0)
+						varsInAtom = 2;
 				}
 				/*if isGuarded, here the only variable is the join one to fulfill the guardedness requirement without changing left atom*/
 				else
 					varsInAtom = 1;
 			}
 
-			/*create each variable*/
+			/*define each variable as argument*/
 			for(int j = 1; j <= varsInAtom-1; j++) {
-				Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
-				this.run.harmlessInstance ++;
-				argumentsRight.add(v);
+				argumentsRight.add(new Variable(harmlessVariable + this.run.harmlessInstance));
+				this.run.updateHarmlessInstance();
 			}
 			/*add join variable*/
 			argumentsRight.add(joinVariable);
@@ -536,40 +606,50 @@ public class JoinRuleGenerator extends RuleGenerator{
 			right = new Literal(name, argumentsRight);
 
 			/*update the edb data structures, if needed*/
-			if(!alreadyUsedAtomName) {
+			if(!atomAlreadyGenerated) {
 				this.run.inputLiterals.add(right);
-				this.run.inputLiteralNamesArguments.put(name,varsInAtom);
+				this.run.inputLiteralNamesNumArguments.put(name,varsInAtom);
 			}
 		}
 
-		else{	// nonLinearRecJoin
+		/*with left-right recursive joins it is required to have an idb as right atom*/
+		else{	// leftRightRecJoin
+			/*here the join must be with the same idb*/
 			name = left.getAtom().getName();
 			varsInAtom = left.getAtom().getArguments().size();
+			/*get possible number of affected positions in the atom*/
+			if(this.run.affectedAtomNames.contains(name))
+				harmfulVarsInAtom = this.run.numAffectedPositionsPerAtom.get(name);
 
-			/*the type of join influences this choice*/
-			/*harmless joins require harmless join variables*/
-			if((typeOfJoin.equals(ModelGenerator.joinhhW) || typeOfJoin.equals(ModelGenerator.joinhhNW))
-					&& this.run.affectedAtomNames.contains(name)){
-				/*create each harmful variable*/
-				for(int j = 1; j <= varsInAtom-2; j++) {
-					Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
-					this.run.harmlessInstance ++;
-					argumentsRight.add(v);
-				}
-				/*add join variable*/
+			/*the type of join influences the order of the variables*/
+			if(//harmfulVarsInAtom!=0 && 
+					(typeOfJoin.equals(ModelGenerator.joinhhW) || typeOfJoin.equals(ModelGenerator.joinhhNW))){
+				/*add join variable in first position, as it is harmless by construction*/
 				argumentsRight.add(joinVariable);
-				/*add remaining harmless variable*/
-				argumentsRight.add(new Variable(harmlessVariable + this.run.harmlessInstance));
-				this.run.harmlessInstance ++;
-			}
-			else{
-				/*create each variable*/
-				for(int j = 1; j <= varsInAtom-1; j++) {
-					Variable v = new Variable(harmlessVariable + this.run.harmlessInstance);
-					this.run.harmlessInstance ++;
-					argumentsRight.add(v);
+				/*define each harmless variable as argument*/
+				for(int j = 1; j <= varsInAtom-1-harmfulVarsInAtom; j++) {
+					argumentsRight.add(new Variable(harmlessVariable + this.run.harmlessInstance));
+					this.run.updateHarmlessInstance();
 				}
-				/*add join variable*/
+				/*define each harmful variable as argument*/
+				for(int j = 1; j <= harmfulVarsInAtom; j++) {
+					argumentsRight.add(new Variable(harmfulVariable + this.run.harmfulInstance));
+					this.run.updateHarmfulInstance();
+				}
+			}
+			else{ //harmfulVarsInAtom==0 || joinHH
+				/*define each harmless variable as argument*/
+				for(int j = 1; j <= varsInAtom-harmfulVarsInAtom; j++) {
+					argumentsRight.add(new Variable(harmlessVariable + this.run.harmlessInstance));
+					this.run.updateHarmlessInstance();
+				}
+				/*define each harmful variable as argument*/
+				for(int j = 1; j <= harmfulVarsInAtom; j++) {
+					argumentsRight.add(new Variable(harmfulVariable + this.run.harmfulInstance));
+					this.run.updateHarmfulInstance();
+				}
+				/*add join variable in last position*/
+				argumentsRight.remove(argumentsRight.size()-1);
 				argumentsRight.add(joinVariable);
 			}
 
@@ -578,7 +658,6 @@ public class JoinRuleGenerator extends RuleGenerator{
 		}
 
 		body.add(right);
-
 		/*if it is a right recursion, invert the order of the atoms in the body*/
 		if(typeOfRecJoin.equals(rightRecJoin))
 			return IntStream.range(0, body.size())
@@ -588,20 +667,19 @@ public class JoinRuleGenerator extends RuleGenerator{
 		else
 			return body;	
 	}
-	
-	
-	
+
+
+
 	/**
-	 * It builds the body for a join rule involved in a tertiary branch
+	 * It builds the body of a join rule involved in a tertiary branch
 	 * 
 	 * @param firstExistentialHead
 	 * @param typeOfJoin
 	 * @param isGuarded
 	 * @return the built list of literals
 	 */
-	public List<Literal> createJoinBodyTertiaryRule(Atom firstExistentialHead, String typeOfJoin, boolean isGuarded) {
-		return this.createJoinBodyChaseSteps(firstExistentialHead, typeOfJoin, isGuarded);
+	public List<Literal> createJoinBodyTertiaryRule(Atom firstHead, String typeOfJoin, boolean isGuarded) {
+		return this.createJoinBodyChaseSteps(firstHead, typeOfJoin, isGuarded);
 	}
-
 
 }

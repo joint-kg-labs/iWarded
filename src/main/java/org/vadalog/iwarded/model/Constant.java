@@ -4,6 +4,8 @@ import java.util.*;
 
 import org.vadalog.iwarded.model.annotations.TypeEnum;
 
+
+
 /**
  * A Constant in a Datalog program. It is a typed object.
  * The literals are like in Java. The quotes "" are part of the String

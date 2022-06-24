@@ -17,7 +17,7 @@ import org.vadalog.iwarded.model.Variable;
 /**
  * This class handles the generation of selection conditions in iWarded 
  * 
- * @author tbaldazzi
+ * @author teodorobaldazzi
  * 
  * Copyright (C) 2021  authors: Teodoro Baldazzi, Luigi Bellomarini, Emanuel Sallinger
  * This program is free software: you can redistribute it and/or modify
@@ -41,7 +41,7 @@ public class ConditionGenerator {
 
 	/**
 	 * Constructor for ConditionsGenerator
-	*/
+	 */
 	public ConditionGenerator(){
 		this.run = ModelGenerator.getModelInstance();
 	}
@@ -79,37 +79,29 @@ public class ConditionGenerator {
 	 * @return the rule with the added conditions
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Rule addConditions(Rule r){
-		Random rand = new Random();
+	public Rule addConditions(Rule rule){
+		Random r = new Random();
 		List<Condition> conditions = new ArrayList<>();
 
-		if(this.run.numberOfSelectionConditions>0){
-			Atom atom = r.getBody().get(0).getAtom();
-			Variable variable = (Variable) atom.getArguments().get(0);
+		Atom atom = rule.getBody().get(0).getAtom();
+		Variable variable = (Variable) atom.getArguments().get(0);
 
-			Constant compar = new Constant(rand.nextInt(99));	//condition has to be lower than 99 (by choice)
-			Integer value = new Integer((int) compar.getValue());
-			while(value<=0){
-				compar = new Constant(rand.nextInt(99));
-				value = new Integer((int) compar.getValue());
-			}
-
-			ComparisonOperatorsEnum compOperator = this.defineComparisonOperator();
-			Condition condition = new Condition(variable, compOperator, compar);
-			conditions.add(condition);
-
-			Integer selectivity = (int) Math.round(rand.nextGaussian()+this.run.averageSelectivity);
-			while(selectivity<1)
-				selectivity = (int) Math.round(rand.nextGaussian()+this.run.averageSelectivity);
-
-			this.run.conditionForRule.put(atom.getName(), (Integer) compar.getValue());
-			this.run.selectivityForRule.put(atom.getName(), selectivity);
+		Constant compar = new Constant(r.nextInt(99));	//condition has to be lower than 99 (by design choice)
+		Integer value = Integer.valueOf((int) compar.getValue());
+		while(value<=0){
+			compar = new Constant(r.nextInt(99));
+			value = Integer.valueOf((int) compar.getValue());
 		}
-		r = new Rule(r.getHead(),r.getBody(),conditions);
-		return r;
+
+		ComparisonOperatorsEnum compOperator = this.defineComparisonOperator();
+		Condition condition = new Condition(variable, compOperator, compar);
+		conditions.add(condition);
+
+		rule = new Rule(rule.getHead(),rule.getBody(),conditions);
+		return rule;
 	}
 
-	
+
 
 
 }

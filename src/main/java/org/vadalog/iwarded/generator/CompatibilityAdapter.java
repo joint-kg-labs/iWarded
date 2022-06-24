@@ -14,7 +14,7 @@ import org.vadalog.iwarded.utils.Utils;
  * If iWarded required different parameters to build the program,
  * it adds the changes as comments in the .vada file
  * 
- * @author tbaldazzi
+ * @author teodorobaldazzi
  * 
  * Copyright (C) 2021  authors: Teodoro Baldazzi, Luigi Bellomarini, Emanuel Sallinger
  * This program is free software: you can redistribute it and/or modify
@@ -36,9 +36,13 @@ public class CompatibilityAdapter {
 
 	/*copy of input variables which may be changed by iWarded*/
 	/*to succeed in the generation of the program*/	
-	private Integer numberOfInputAtoms;
+	private Integer numberOfInputPredicates;
 	private Integer averageEVarsInRule;
 	private Float varianceEVarsInRule;
+	
+	private Integer numberOfOutputPredicates;
+	private Integer numberOfInputOutputSequences;
+	private boolean oneInputOutputSequencePerOutputPredicate;
 	
 	private Integer numberOfLinearRules;
 	private Integer numberOfJoinRules;
@@ -49,13 +53,14 @@ public class CompatibilityAdapter {
 	private Integer numberOfHarmlessHarmlessJoinsWithoutWard;
 	private Integer numberOfHarmlessHarmfulJoins;
 	private Integer numberOfHarmfulHarmfulJoins;
-	private Integer numberOfNonLinearJoinRecursions;
+	private Integer numberOfLeftRightJoinRecursions;
 	
 	private boolean isGuarded;
-
+	private boolean isShy;
+	
 	private boolean noHHJoinsDueToGuardedness;
-	private boolean noNonLinJoinRecsDueToGuardedness;
-
+	private boolean noHHJoinsDueToShyness;
+	private boolean noLeftRightJoinRecsDueToGuardedness;
 
 
 	/**
@@ -68,12 +73,16 @@ public class CompatibilityAdapter {
 
 
 	/**
-	 * It initializes the parameters as the original ones from input
+	 * It initializes the adapter parameters as the original ones from input
 	 */
-	public void initializeParametersCompatibility() {
-		this.numberOfInputAtoms = this.run.numberOfInputAtoms;
+	public void initializeAdapterParameters() {		
+		
+		this.numberOfInputPredicates = this.run.numberOfInputPredicates;
 		this.averageEVarsInRule = this.run.averageEVarsInRule;
 		this.varianceEVarsInRule = this.run.varianceEVarsInRule;
+		
+		this.numberOfOutputPredicates = this.run.numberOfOutputPredicates;
+		this.numberOfInputOutputSequences = this.run.numberOfInputOutputSequences;
 
 		this.numberOfLinearRules = this.run.numberOfLinearRules;
 		this.numberOfExistentialRules = this.run.numberOfExistentialRules;
@@ -83,9 +92,10 @@ public class CompatibilityAdapter {
 		this.numberOfHarmlessHarmlessJoinsWithoutWard = this.run.numberOfHarmlessHarmlessJoinsWithoutWard;
 		this.numberOfHarmlessHarmfulJoins = this.run.numberOfHarmlessHarmfulJoins;
 		this.numberOfHarmfulHarmfulJoins = this.run.numberOfHarmfulHarmfulJoins;
-		this.numberOfNonLinearJoinRecursions = this.run.numberOfNonLinearJoinRecursions;
+		this.numberOfLeftRightJoinRecursions = this.run.numberOfLeftRightJoinRecursions;
 		
 		this.isGuarded = this.run.isGuarded;
+		this.isShy = this.run.isShy;
 	}
 	
 	
@@ -96,9 +106,16 @@ public class CompatibilityAdapter {
 	public void updateParametersCompatibility() {
 		
 		/*not possible to have more evars than vars in head of rule*/
-		if(this.averageEVarsInRule-this.varianceEVarsInRule>this.run.averageVarsInAtom-this.run.varianceVarsInAtom) {
-			this.run.averageEVarsInRule = this.run.averageVarsInAtom;
-			this.run.varianceEVarsInRule = this.run.varianceVarsInAtom;
+		if(this.averageEVarsInRule-this.varianceEVarsInRule>this.run.averageVarsInPredicate-this.run.varianceVarsInPredicate) {
+			this.run.averageEVarsInRule = this.run.averageVarsInPredicate;
+			this.run.varianceEVarsInRule = this.run.varianceVarsInPredicate;
+		}
+		
+		/*at least one input-output sequence per output predicate*/
+		if(this.numberOfInputOutputSequences<this.numberOfOutputPredicates) {
+			this.run.numberOfInputOutputSequences = this.run.numberOfOutputPredicates;
+			this.numberOfInputOutputSequences = this.numberOfOutputPredicates;
+			this.oneInputOutputSequencePerOutputPredicate = true;
 		}
 		
 		this.numberOfJoinRules = this.run.numberOfJoinRules;
@@ -106,25 +123,36 @@ public class CompatibilityAdapter {
 		/*because it would require to modify the atoms to make one a guard, which would affect the whole program*/
 		// TODO: allow these two types of structures even in Guarded scenarios
 		if(this.isGuarded) {
-			if(this.numberOfHarmfulHarmfulJoins!=0) {
+			if(this.numberOfHarmfulHarmfulJoins != 0) {
 				this.numberOfJoinRules -= this.numberOfHarmfulHarmfulJoins;
 				this.run.numberOfJoinRules -= this.numberOfHarmfulHarmfulJoins;
 				this.numberOfHarmfulHarmfulJoins = 0;
 				this.run.numberOfHarmfulHarmfulJoins = 0;
 				this.noHHJoinsDueToGuardedness = true;
 			}
-			if(this.numberOfNonLinearJoinRecursions!=0) {
-				this.numberOfNonLinearJoinRecursions = 0;
-				this.run.numberOfNonLinearJoinRecursions = 0;
-				this.noNonLinJoinRecsDueToGuardedness = true;
+			if(this.numberOfLeftRightJoinRecursions != 0) {
+				this.numberOfLeftRightJoinRecursions = 0;
+				this.run.numberOfLeftRightJoinRecursions = 0;
+				this.noLeftRightJoinRecsDueToGuardedness = true;
 				Map<String,Integer> rLengthTemp = new HashMap<>(this.run.rLength);
 				for(String recName : rLengthTemp.keySet()) {
-					if(recName.contains("nonLinJRec_")) {
+					if(recName.contains("leftRightJRec_")) {
 						this.run.rLength.remove(recName);
 						this.run.directRecursionName.remove(recName);
 						this.run.indirectRecursionName.remove(recName);
 					}
 				}
+			}
+			
+			if(this.isShy) {
+				if(this.numberOfHarmfulHarmfulJoins != 0) {
+					this.numberOfJoinRules -= this.numberOfHarmfulHarmfulJoins;
+					this.run.numberOfJoinRules -= this.numberOfHarmfulHarmfulJoins;
+					this.numberOfHarmfulHarmfulJoins = 0;
+					this.run.numberOfHarmfulHarmfulJoins = 0;
+					this.noHHJoinsDueToShyness = true;
+				}
+
 			}
 		}
 	}
@@ -146,52 +174,54 @@ public class CompatibilityAdapter {
 		/*parameters to the list of comments for the vada file*/
 		parameters.add("% =====ADAPTED VADA PROGRAM PARAMETERS=====");
 
-		if(this.numberOfInputAtoms!=this.run.inputLiterals.size())
-			parameters.add("% Number of Input Atoms: " + this.run.inputLiterals.size());
-		if(this.run.numberOfLinearRules!=0) {
+		if(this.numberOfInputPredicates != this.run.inputLiterals.size()) {
+			parameters.add("% Number of Input Predicates: " + this.run.inputLiterals.size());	
+		}
+		if(this.run.numberOfLinearRules != 0) {
 			this.numberOfLinearRules = this.numberOfLinearRules - this.run.numberOfLinearRules;
 			parameters.add("% Number of Linear Rules: " + this.numberOfLinearRules);
 		}
-		
-		if(this.averageEVarsInRule!=this.run.averageEVarsInRule) {
+		if(this.averageEVarsInRule != this.run.averageEVarsInRule) {
 			parameters.add("% Average number of Existentially Quantified Variables per Rule: " + this.run.averageEVarsInRule);
 			parameters.add("% Variance of Existentially Quantified Variables per Rule: " + this.run.varianceEVarsInRule);
-
 		}
-		
-		if(this.run.numberOfExistentialRules!=0) {
+		if(this.oneInputOutputSequencePerOutputPredicate) {
+			parameters.add("% Number of Input-Output Sequences: " + this.run.numberOfInputOutputSequences);	
+		}
+		if(this.run.numberOfExistentialRules != 0) {
 			this.numberOfExistentialRules = this.numberOfExistentialRules - this.run.numberOfExistentialRules;
 			parameters.add("% Number of Existential Rules: " + this.numberOfExistentialRules);
 		}
-		if(this.run.numberOfDangerousRules!=0) {
+		if(this.run.numberOfDangerousRules != 0) {
 			this.numberOfDangerousRules = this.numberOfDangerousRules - this.run.numberOfDangerousRules;
 			parameters.add("% Number of Dangerous Rules: " + this.numberOfDangerousRules);
 		}
-		if(this.run.numberOfJoinRules!=0) {
+		if(this.run.numberOfJoinRules != 0) {
 			this.numberOfJoinRules = this.numberOfJoinRules - this.run.numberOfJoinRules;
 			parameters.add("% Number of Join Rules: " + this.numberOfJoinRules);
 		}
-		if(this.run.numberOfHarmlessHarmlessJoinsWithWard!=0) {
+		if(this.run.numberOfHarmlessHarmlessJoinsWithWard != 0) {
 			this.numberOfHarmlessHarmlessJoinsWithWard = this.numberOfHarmlessHarmlessJoinsWithWard - this.run.numberOfHarmlessHarmlessJoinsWithWard;
 			parameters.add("% Number of Harmless-Harmless Join Rules with Ward: " + this.numberOfHarmlessHarmlessJoinsWithWard);
 		}
-		if(this.run.numberOfHarmlessHarmlessJoinsWithoutWard!=0) {
+		if(this.run.numberOfHarmlessHarmlessJoinsWithoutWard != 0) {
 			this.numberOfHarmlessHarmlessJoinsWithoutWard = this.numberOfHarmlessHarmlessJoinsWithoutWard - this.run.numberOfHarmlessHarmlessJoinsWithoutWard;
 			parameters.add("% Number of Harmless-Harmless Join Rules without Ward: " + this.numberOfHarmlessHarmlessJoinsWithoutWard);
 		}
-		if(this.run.numberOfHarmlessHarmfulJoins!=0) {
+		if(this.run.numberOfHarmlessHarmfulJoins != 0) {
 			this.numberOfHarmlessHarmfulJoins = this.numberOfHarmlessHarmfulJoins - this.run.numberOfHarmlessHarmfulJoins;
 			parameters.add("% Number of Harmless-Harmful Joins: " + this.numberOfHarmlessHarmfulJoins);
 		}
-		if(this.run.numberOfHarmfulHarmfulJoins!=0 || this.noHHJoinsDueToGuardedness) {
+		if(this.run.numberOfHarmfulHarmfulJoins != 0 || this.noHHJoinsDueToGuardedness || this.noHHJoinsDueToShyness) {
 			this.numberOfHarmfulHarmfulJoins = this.numberOfHarmfulHarmfulJoins - this.run.numberOfHarmfulHarmfulJoins;
 			parameters.add("% Number of Harmful-Harmful Joins: " + this.numberOfHarmfulHarmfulJoins);
 		}
-		if(this.noNonLinJoinRecsDueToGuardedness) {
-			parameters.add("% Number of Non-Linear Join Recursions: " + this.numberOfNonLinearJoinRecursions);
+		if(this.noLeftRightJoinRecsDueToGuardedness) {
+			parameters.add("% Number of Non-Linear Join Recursions: " + this.numberOfLeftRightJoinRecursions);
 			parameters.add("% Length for each Recursion: ");
 			parameters.add(Utils.printSortedMapFromHashMap(this.run.rLength));
 		}
+
 
 		parameters.add("% ==========================================\n");
 

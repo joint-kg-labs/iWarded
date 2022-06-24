@@ -3,6 +3,8 @@ package org.vadalog.iwarded.model.annotations;
 import java.io.Serializable;
 import java.util.Arrays;
 
+
+
 /**
  * It maps a term of a bound predicate (used in a bind annotation) to 
  * a specific column of the respective table in the data source.

@@ -6,6 +6,8 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
+
+
 /**
  * It represents a condition in the body of a Datalog rule.
  * A condition is a formula where the LHS is a variable and the RHS

@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.vadalog.iwarded.model.Atom;
 import org.vadalog.iwarded.model.Literal;
 import org.vadalog.iwarded.model.Model;
+import org.vadalog.iwarded.model.Position;
 import org.vadalog.iwarded.model.Rule;
-import org.vadalog.iwarded.model.annotations.OutputAnnotation;
 
 
 
@@ -45,13 +45,13 @@ import org.vadalog.iwarded.model.annotations.OutputAnnotation;
  * *Recursive closure sequence*:
 	a set of linear and join rules, each introducing a recursion and thus a cycle in the predicate graph.
  *
- * *Program completion sequence*:
-	a set of extra rules needed to globally satisfy the parameters, e.g., the number of selection conditions, in the form of expressions, in our example.
+ * *Program completion sequences*:
+	sets of extra rules needed to globally satisfy the parameters, e.g., the number of linear rules.
  *
  * *Output completion sequence*:
 	a set of linear rules, one for each input-output sequence; the rule head is the output atom and the body atom is connected to the head of the rule closing the sequence.
  * 
- * @author tbaldazzi
+ * @author teodorobaldazzi
  * 
  * Copyright (C) 2021  authors: Teodoro Baldazzi, Luigi Bellomarini, Emanuel Sallinger
  * This program is free software: you can redistribute it and/or modify
@@ -69,7 +69,6 @@ import org.vadalog.iwarded.model.annotations.OutputAnnotation;
  */
 public class ModelGenerator {
 
-
 	private Logger log = LoggerFactory.getLogger(ModelGenerator.class);
 
 	/*static variables*/
@@ -80,19 +79,22 @@ public class ModelGenerator {
 	final static String joinhhNW = "harmless-harmless-noWard";
 	final static String joinhH = "harmless-harmful";
 	final static String joinHH = "harmful-harmful";
+	final static String leftRecJoin = "leftRecJoin";
+	final static String rightRecJoin = "rightRecJoin";
+	final static String leftRightRecJoin = "leftRightRecJoin";
 
 	/*variables which reference other classes in iWarded*/
 	Model resultModel;
 	CompatibilityAdapter adapter;
-	DataGenerator data;
+	ComponentGenerator components;
 	ConditionGenerator conditions;
-	FileGenerator file;
+	FileDataGenerator filedata;
 
 	/*input variables*/
-	Integer numberOfInputAtoms;
-	Integer numberOfOutputAtoms;
-	Integer averageVarsInAtom;
-	Float varianceVarsInAtom;
+	Integer numberOfInputPredicates;
+	Integer numberOfOutputPredicates;
+	Integer averageVarsInPredicate;
+	Float varianceVarsInPredicate;
 	Integer numberOfExistentialRules;
 	Integer averageEVarsInRule;
 	Float varianceEVarsInRule;
@@ -102,31 +104,36 @@ public class ModelGenerator {
 	Integer numberOfHarmlessHarmlessJoinsWithoutWard;
 	Integer numberOfHarmlessHarmfulJoins;
 	Integer numberOfHarmfulHarmfulJoins;	
-	Integer averageChaseSteps;
+	Integer numberOfInputOutputSequences;
+	Integer averageInputOutputSequenceLength;
 	Integer numberOfLinearRecursions;
 	Integer numberOfLeftJoinRecursions;
 	Integer numberOfRightJoinRecursions;
-	Integer numberOfNonLinearJoinRecursions;
+	Integer numberOfLeftRightJoinRecursions;
 	Integer averageRecursionLength;
 	Integer numberOfSelectionConditions;
 	Integer averageSelectivity;
 	Integer numberOfRecordsCSV;
 	boolean isGuarded;
+	boolean isShy;
 	String programName;
 
-	/*variables for chase steps*/
+	/*variables for links between branches in the program*/
 	Rule root;
+	Rule rootExistentialSon;
+
+	/*variables for input-output sequences*/
 	Atom lastAtomInHead;
-	Map<String,Integer> cSteps = new HashMap<>();
-	Map<String,Atom> cLast = new HashMap<>();
-	Map<String,Integer> idbNumVariables = new HashMap<>();	
+	Map<String,Integer> maxCSteps = new HashMap<>();
 	List<String> inputAtomNames;
 	List<String> outputAtomNames;
 	Set<Literal> inputLiterals = new HashSet<>();
-	Map<String,Integer> inputLiteralNamesArguments = new HashMap<>();
-	Integer idbInstance = 1;
-	Integer harmlessInstance = 1;
-	Integer harmfulInstance = 1;
+	Map<String,Integer> inputLiteralNamesNumArguments = new HashMap<>();
+	Map<String,Integer> idbLiteralNamesNumArguments = new HashMap<>();	
+	Map<String,Integer> outputLiteralNamesNumArguments = new HashMap<>();
+	int idbInstance = 1;
+	int harmlessInstance = 1;
+	int harmfulInstance = 1;
 
 	/*variables for join rules */
 	String typeOfJoin;
@@ -135,9 +142,9 @@ public class ModelGenerator {
 	/*variables for existentials and dangerous rules*/
 	Set<String> affectedAtomNames = new HashSet<>();
 	Map<String,Integer> numAffectedPositionsPerAtom = new HashMap<>();
-	Atom firstExistentialHead;
+	List<Set<Position>> affectedPositions = new ArrayList<>();
 
-	/*variables for recursive cycles*/
+	/*variables for recursive sequences*/
 	Literal literalDirectRec;
 	Map<String,Integer> rLength = new HashMap<>();
 	Map<String,Atom> rLast = new HashMap<>();
@@ -147,17 +154,12 @@ public class ModelGenerator {
 	List<String> recLinNames = new ArrayList<>();
 	List<String> recLeftJoinNames = new ArrayList<>();
 	List<String> recRightJoinNames = new ArrayList<>();
-	List<String> recNonLinearJoinNames = new ArrayList<>();
-	Map<String,Atom> bodyRuleForIndNonLinRecJoinRightAtom = new HashMap<>();
-	Map<String,Atom> recNonLinIndJoinRightAtom = new HashMap<>();
-
-	/*variables for selection conditions*/
-	Map<String,Integer> conditionForRule = new HashMap<>();
-	Map<String,Integer> selectivityForRule = new HashMap<>();
+	List<String> recLeftRightJoinNames = new ArrayList<>();
+	Map<String,Atom> indLeftRightRecJoinBodyAtoms = new HashMap<>();
+	Map<String,Atom> indLeftRightRecJoinHeadAtoms = new HashMap<>();
 
 	/*variables for guardedness*/
 	String inputAtomNameForGuarded;
-
 
 
 	/**
@@ -208,9 +210,8 @@ public class ModelGenerator {
 	}
 
 
-
 	/**
-	 * It randomly select the type of current rule
+	 * It randomly selects the type of the current rule
 	 * 
 	 * @return type of rule
 	 */
@@ -231,32 +232,50 @@ public class ModelGenerator {
 
 
 	/**
-	 * It randomly select the type of current join, based on the head of the previous rule
+	 * It randomly selects the type of the current join
+	 * based on the head of the previous rule and the
+	 * possible join requirement for a recursive closure
 	 * 
 	 * @param previousHead
+	 * @param typeOfRecJoin
 	 * @return type of join
 	 */
-	private String defineAndUpdateTypeOfJoin(Atom previousHead) {
-
+	private String defineAndUpdateTypeOfJoin(Atom previousHead, String typeOfRecJoin) {
 		String typeOfJoin = null;
 
 		List<String> typesOfJoin = new ArrayList<>(); 
 		String previousHeadName = previousHead.getName();
 
-		if(this.numberOfHarmlessHarmlessJoinsWithWard>0 && 
-				(!this.affectedAtomNames.contains(previousHeadName) || 
-						(this.affectedAtomNames.contains(previousHeadName) 
-								&& previousHead.getArguments().size()>(this.numAffectedPositionsPerAtom.get(previousHeadName)+1))))
-			typesOfJoin.add(joinhhW);
-		if(this.numberOfHarmlessHarmlessJoinsWithoutWard>0 && 
-				(!this.affectedAtomNames.contains(previousHeadName) || 
-						(this.affectedAtomNames.contains(previousHeadName) 
-								&& previousHead.getArguments().size()>(this.numAffectedPositionsPerAtom.get(previousHeadName)+1))))
-			typesOfJoin.add(joinhhNW);
-		if(this.numberOfHarmlessHarmfulJoins>0 && this.affectedAtomNames.contains(previousHeadName))
-			typesOfJoin.add(joinhH);
-		if(this.numberOfHarmfulHarmfulJoins>0 && this.affectedAtomNames.contains(previousHeadName))
-			typesOfJoin.add(joinHH);
+		/*not a recursive closure join*/
+		if(typeOfRecJoin==null) {
+			if(this.numberOfHarmlessHarmlessJoinsWithWard>0) 
+				typesOfJoin.add(joinhhW);
+			if(this.numberOfHarmlessHarmlessJoinsWithoutWard>0) 
+				typesOfJoin.add(joinhhNW);
+			if(this.affectedAtomNames.contains(previousHeadName)) {
+				if(this.numberOfHarmlessHarmfulJoins>0)
+					typesOfJoin.add(joinhH);
+				if(this.numberOfHarmfulHarmfulJoins>0)
+					typesOfJoin.add(joinHH);
+			}
+		}
+
+		/*recursive closure join*/
+		else {	//typeOfRecJoin!=null
+			if(this.numberOfHarmlessHarmlessJoinsWithWard>0) 
+				typesOfJoin.add(joinhhW);
+			if(this.numberOfHarmlessHarmlessJoinsWithoutWard>0) 
+				typesOfJoin.add(joinhhNW);
+			if(this.affectedAtomNames.contains(previousHeadName)) {
+				if(this.numberOfHarmlessHarmfulJoins>0 
+						&& !typeOfRecJoin.equals(leftRightRecJoin))
+					typesOfJoin.add(joinhH);
+				if(this.numberOfHarmfulHarmfulJoins>0 
+						&& !(typeOfRecJoin.equals(leftRecJoin) 
+								|| typeOfRecJoin.equals(rightRecJoin)))
+					typesOfJoin.add(joinHH);
+			}
+		}
 
 		try {
 			int num = ThreadLocalRandom.current().nextInt(0, typesOfJoin.size());
@@ -293,9 +312,9 @@ public class ModelGenerator {
 	private boolean isDangerousRule() {
 		int isDangerous = ThreadLocalRandom.current().nextInt(0, 1 + 1);
 		if(isDangerous == 1)
-			return false;
-		else
 			return true;
+		else
+			return false;
 	}
 
 
@@ -307,10 +326,10 @@ public class ModelGenerator {
 	 */
 	private boolean isExistentialRule(){
 		int isExistential = ThreadLocalRandom.current().nextInt(0, 1 + 1);
-		if(isExistential == 0)
-			return false;
-		else
+		if(isExistential == 1)
 			return true;
+		else
+			return false;
 	}
 
 
@@ -322,7 +341,7 @@ public class ModelGenerator {
 	 */
 	private boolean hasSelectionCondition() {
 		int hasSelectionCondition = ThreadLocalRandom.current().nextInt(0, 1 + 1);
-		if(hasSelectionCondition == 1 && this.numberOfSelectionConditions>0)
+		if(hasSelectionCondition == 1)
 			return true;
 		else
 			return false;
@@ -334,36 +353,191 @@ public class ModelGenerator {
 	 * It sets input parameters with input args and other instance variables
 	 */
 	public void setParameters(String[] args){
-		this.numberOfInputAtoms = Integer.parseInt(args[0]);
-		this.numberOfOutputAtoms = Integer.parseInt(args[1]);
-		this.averageVarsInAtom = Integer.parseInt(args[2]);
-		this.varianceVarsInAtom = Float.parseFloat(args[3]);
-		this.numberOfExistentialRules = Integer.parseInt(args[4]);
-		this.averageEVarsInRule = Integer.parseInt(args[5]);
-		this.varianceEVarsInRule = Float.parseFloat(args[6]);
-		this.numberOfDangerousRules = Integer.parseInt(args[7]);
-		this.numberOfLinearRules = Integer.parseInt(args[8]);
-		this.numberOfHarmlessHarmlessJoinsWithWard = Integer.parseInt(args[9]);
-		this.numberOfHarmlessHarmlessJoinsWithoutWard = Integer.parseInt(args[10]);
-		this.numberOfHarmlessHarmfulJoins = Integer.parseInt(args[11]);
-		this.numberOfHarmfulHarmfulJoins = Integer.parseInt(args[12]);		
-		this.averageChaseSteps = Integer.parseInt(args[13]);
-		this.numberOfLinearRecursions = Integer.parseInt(args[14]);
-		this.numberOfLeftJoinRecursions = Integer.parseInt(args[15]);
-		this.numberOfRightJoinRecursions = Integer.parseInt(args[16]);
-		this.numberOfNonLinearJoinRecursions = Integer.parseInt(args[17]);
-		this.averageRecursionLength = Integer.parseInt(args[18]);
-		this.numberOfSelectionConditions = Integer.parseInt(args[19]);
-		this.averageSelectivity = Integer.parseInt(args[20]);
-		this.numberOfRecordsCSV = Integer.parseInt(args[21]);
-		this.isGuarded = false;
-		if(args[22].equals("true"))
-			this.isGuarded = true;
-		this.programName = args[23];
+		/*if some parameters are not set, default values are employed*/
+		if(args.length!=27) {
+			this.numberOfInputPredicates = 1;
+			this.numberOfOutputPredicates = 1;
+			this.averageVarsInPredicate = 1;
+			this.varianceVarsInPredicate = (float) 0;
+			this.numberOfExistentialRules = 0;
+			this.averageEVarsInRule = 0;
+			this.varianceEVarsInRule = (float) 0;
+			this.numberOfDangerousRules = 0;
+			this.numberOfLinearRules = 1;
+			this.numberOfHarmlessHarmlessJoinsWithWard = 0;
+			this.numberOfHarmlessHarmlessJoinsWithoutWard = 0;
+			this.numberOfHarmlessHarmfulJoins = 0;
+			this.numberOfHarmfulHarmfulJoins = 0;
+			this.numberOfInputOutputSequences = 1;
+			this.averageInputOutputSequenceLength = 1;
+			this.numberOfLinearRecursions = 0;
+			this.numberOfLeftJoinRecursions = 0;
+			this.numberOfLeftJoinRecursions = 0;
+			this.numberOfRightJoinRecursions = 0;
+			this.numberOfLeftRightJoinRecursions = 0;
+			this.averageRecursionLength = 0;
+			this.numberOfSelectionConditions = 0;
+			this.averageSelectivity = 0;
+			this.numberOfRecordsCSV = 1;
+			this.isGuarded = false;
+			this.isShy = false;
+			this.programName = "defaultProgram";
+		}
 
-		this.data = new DataGenerator();
+		else {
+			try {
+				this.numberOfInputPredicates = Integer.parseInt(args[0]);
+			} catch(NumberFormatException e) {
+				this.numberOfInputPredicates = 1;
+			}
+
+			try {
+				this.numberOfOutputPredicates = Integer.parseInt(args[1]);
+			} catch(NumberFormatException e) {
+				this.numberOfOutputPredicates = 1;
+			}
+
+			try {
+				this.averageVarsInPredicate = Integer.parseInt(args[2]);
+			} catch(NumberFormatException e) {
+				this.averageVarsInPredicate = 1;
+			}
+
+			try {
+				this.varianceVarsInPredicate = Float.parseFloat(args[3]);
+			} catch(NumberFormatException e) {
+				this.varianceVarsInPredicate = (float) 0;
+			}
+
+			try {
+				this.numberOfExistentialRules = Integer.parseInt(args[4]);
+			} catch(NumberFormatException e) {
+				this.numberOfExistentialRules = 0;
+			}
+
+			try {
+				this.averageEVarsInRule = Integer.parseInt(args[5]);
+			} catch(NumberFormatException e) {
+				this.averageEVarsInRule = 0;
+			}
+
+			try {
+				this.varianceEVarsInRule = Float.parseFloat(args[6]);
+			} catch(NumberFormatException e) {
+				this.varianceEVarsInRule = (float) 0;
+			}
+
+			try {
+				this.numberOfDangerousRules = Integer.parseInt(args[7]);
+			} catch(NumberFormatException e) {
+				this.numberOfDangerousRules = 0;
+			}
+
+			try {
+				this.numberOfLinearRules = Integer.parseInt(args[8]);
+			} catch(NumberFormatException e) {
+				this.numberOfLinearRules = 1;
+			}
+
+			try {
+				this.numberOfHarmlessHarmlessJoinsWithWard = Integer.parseInt(args[9]);
+			} catch(NumberFormatException e) {
+				this.numberOfHarmlessHarmlessJoinsWithWard = 0;
+			}
+
+			try {
+				this.numberOfHarmlessHarmlessJoinsWithoutWard = Integer.parseInt(args[10]);
+			} catch(NumberFormatException e) {
+				this.numberOfHarmlessHarmlessJoinsWithoutWard = 0;
+			}
+
+			try {
+				this.numberOfHarmlessHarmfulJoins = Integer.parseInt(args[11]);
+			} catch(NumberFormatException e) {
+				this.numberOfHarmlessHarmfulJoins = 0;
+			}
+
+			try {
+				this.numberOfHarmfulHarmfulJoins = Integer.parseInt(args[12]);
+			} catch(NumberFormatException e) {
+				this.numberOfHarmfulHarmfulJoins = 0;
+			}
+
+			try {
+				this.numberOfInputOutputSequences = Integer.parseInt(args[13]);
+			} catch(NumberFormatException e) {
+				this.numberOfInputOutputSequences = 1;
+			}
+
+			try {
+				this.averageInputOutputSequenceLength = Integer.parseInt(args[14]);
+			} catch(NumberFormatException e) {
+				this.averageInputOutputSequenceLength = 1;
+			}
+
+			try {
+				this.numberOfLinearRecursions = Integer.parseInt(args[15]);
+			} catch(NumberFormatException e) {
+				this.numberOfLinearRecursions = 0;
+			}
+
+			try {
+				this.numberOfLeftJoinRecursions = Integer.parseInt(args[16]);
+			} catch(NumberFormatException e) {
+				this.numberOfLeftJoinRecursions = 0;
+			}
+
+			try {
+				this.numberOfRightJoinRecursions = Integer.parseInt(args[17]);
+			} catch(NumberFormatException e) {
+				this.numberOfRightJoinRecursions = 0;
+			}
+
+			try {
+				this.numberOfLeftRightJoinRecursions = Integer.parseInt(args[18]);
+			} catch(NumberFormatException e) {
+				this.numberOfLeftRightJoinRecursions = 0;
+			}
+
+			try {
+				this.averageRecursionLength = Integer.parseInt(args[19]);
+			} catch(NumberFormatException e) {
+				this.averageRecursionLength = 0;
+			}
+
+			try {
+				this.numberOfSelectionConditions = Integer.parseInt(args[20]);
+			} catch(NumberFormatException e) {
+				this.numberOfSelectionConditions = 0;
+			}
+
+			try {
+				this.averageSelectivity = Integer.parseInt(args[21]);
+			} catch(NumberFormatException e) {
+				this.averageSelectivity = 0;
+			}
+
+			try {
+				this.numberOfRecordsCSV = Integer.parseInt(args[22]);
+			} catch(NumberFormatException e) {
+				this.numberOfRecordsCSV = 1;
+			}
+
+			this.isGuarded = false;
+			if(args[23]!=null && args[23].equals("true"))
+				this.isGuarded = true;
+
+			this.isShy = false;
+			if(args[24]!=null && args[25].equals("true"))
+				this.isShy = true;
+
+			this.programName = args[26];
+
+		}
+
+		this.components = new ComponentGenerator();
 		this.adapter = new CompatibilityAdapter();
-		this.file = new FileGenerator();
+		this.filedata = new FileDataGenerator();
 		this.conditions = new ConditionGenerator();
 	}
 
@@ -379,29 +553,29 @@ public class ModelGenerator {
 
 		List<String> modelComments = new ArrayList<>();
 
-		/*initialize the adapter to check for parameters compatibility*/
-		this.adapter.initializeParametersCompatibility();
+		/*initialize adapter and check for parameters compatibility*/
+		this.adapter.initializeAdapterParameters();
 
-		/*define names and attributes of atoms and rules for the vada program*/
-		this.data.defineAtomsAndRules();
+		/*define names and attributes of atoms and rules for vada program*/
+		this.components.defineAtomsAndRules();
 
 		/*add original parameters as comments*/
-		modelComments.addAll(this.file.addOriginalProgramParametersToVadaFile());
+		modelComments.addAll(this.filedata.addOriginalProgramParametersToVadaFile());
 
-		/*update the parameters for compatibility with the adapter*/
+		/*update parameters for compatibility with adapter*/
 		this.adapter.updateParametersCompatibility();
 
-		/*generate rules for input-output sequence*/
-		this.generateRulesForChaseSteps();
+		/*generate rules for main input-output sequences*/
+		this.generateRulesForMainInputOutputSequences();
 
-		/*generate rules for recursive cycles*/
-		this.generateRulesForRecursions();
+		/*generate rules for recursive sequences*/
+		this.generateRulesForRecursiveSequences();
 
-		/*generate rules to complete remaining input requirements*/
-		this.generateRulesForCompletion();
+		/*generate rules for secondary input-output sequences*/
+		this.generateRulesForSecondaryInputOutputSequences();
 
-		/*generate rules to complete input-output sequences*/
-		this.generateRulesForOutput();
+		/*generate rules for tertiary input-output sequences*/
+		this.generateRulesForTertiaryInputOutputSequences();
 
 		/*add updated parameters as comments*/
 		modelComments.addAll(this.adapter.addAdaptedProgramParametersToVadaFile());
@@ -409,8 +583,8 @@ public class ModelGenerator {
 		/*set parameters as comments in the .vada file*/
 		this.resultModel.setComments(modelComments);
 
-		/*here we create the input and bind annotations and generate the input csv file*/
-		this.file.createInputBindMappingAnnotations(this.numberOfRecordsCSV, this.resultModel, path);
+		/*create input, output, bind and mapping annotations and generate the input csv file*/
+		this.filedata.createAnnotationsAndCsvFiles(path);
 		System.out.println("\n=====Vadalog Program successfully built=====\n");
 
 		/*set instance to null to allow multiple generation in same session of iWarded*/
@@ -425,21 +599,28 @@ public class ModelGenerator {
 
 
 	/**
-	 * It generates rules for input-output sequence
+	 * It generates rules for input-output sequences in main branch
 	 */
-	private void generateRulesForChaseSteps(){
+	private void generateRulesForMainInputOutputSequences(){
 
+		/*first rule of the program, it is a non-existential, non dangerous linear rule*/
 		boolean isRoot = true;
+		/*the atom in the main branch that will be linked to each output atom */
+		Map<String,Atom> cLastMain = new HashMap<>();
+		boolean maxChaseStepsFinished = false;
 
-		boolean chaseStepsFinished = false;
+		if (log.isDebugEnabled()) log.debug("Generating rules for main branch");
+		System.out.println("\n=====Generating rules for main branch=====");
+		Rule currentRule;
 
-		if (log.isDebugEnabled()) log.debug("Generating rules for input-output sequence");
-		System.out.println("\n=====Generating rules for input-output sequence=====");
-		while(!chaseStepsFinished){
-			Rule currentRule;
+
+		if (log.isDebugEnabled()) log.debug("Generating rules for main input-output sequences");
+		System.out.println("\n=====Generating rules for main input-output sequences=====");
+		int currentChaseSteps = 0;
+		while(!maxChaseStepsFinished){
 
 			/*define the BODY of the rule*/
-			List<Literal> body = new ArrayList<>();
+			List<Literal> body;
 
 			/*define whether the rule is linear or join*/	
 			String linearOrJoin = this.defineTypeOfRule();
@@ -447,11 +628,12 @@ public class ModelGenerator {
 			/*choose the type of join, if needed*/
 			this.typeOfJoin = null;
 			if(!isRoot && linearOrJoin.equals(ModelGenerator.joinRule))
-				this.typeOfJoin = this.defineAndUpdateTypeOfJoin(lastAtomInHead);
+				this.typeOfJoin = this.defineAndUpdateTypeOfJoin(this.lastAtomInHead,null);
 
 			/*build body of current rule*/
 			if(isRoot || linearOrJoin.equals(ModelGenerator.linearRule) || this.typeOfJoin==null) {
 				LinearRuleGenerator l = new LinearRuleGenerator();
+				body = new ArrayList<>();
 				body.add(l.createLinearBodyChaseSteps(this.lastAtomInHead,isRoot));
 				this.numberOfLinearRules--;
 			}
@@ -460,7 +642,6 @@ public class ModelGenerator {
 				body = j.createJoinBodyChaseSteps(this.lastAtomInHead,this.typeOfJoin,this.isGuarded);//,harmlessOrDangerous);
 				this.numberOfJoinRules--;
 			}
-
 
 			/*define the HEAD of the rule*/
 			Atom head;
@@ -487,7 +668,7 @@ public class ModelGenerator {
 			}
 			/*define whether the rule is existential*/
 			boolean isExistential = false;
-			if(this.numberOfExistentialRules>0 && !isDangerous && !isRoot){
+			if(this.numberOfExistentialRules>1 && !isDangerous && !isRoot){
 				isExistential = this.isExistentialRule();
 				if(isExistential)
 					this.numberOfExistentialRules--;
@@ -496,25 +677,13 @@ public class ModelGenerator {
 			/*build head of current rule*/
 			RuleGenerator l = new LinearRuleGenerator();
 			head = l.createHeadChaseSteps(body, isBodyAffected, isDangerous, isExistential);
-			this.idbNumVariables.put(head.getName(), head.getArguments().size());
 
 			/*update last atom in head*/
 			this.lastAtomInHead = head;
 
-			/*update data structures for output sequence*/
-			for(String outName : this.outputAtomNames){
-				/*it means that the body of the output rule will have this atom*/
-				if(this.cSteps.get(outName).intValue()==1 && !this.cLast.containsKey(outName)){
-					this.cLast.put(outName, body.get(0).getAtom());
-					this.cSteps.put(outName, this.cSteps.get(outName)-1);
-				} 
-				if(this.cSteps.get(outName).intValue()>1)
-					this.cSteps.put(outName, this.cSteps.get(outName)-1);
-			}
-
-			/*complete the creation of the rule, adding possible conditions*/
+			/*complete the creation of the rule, adding possible conditions or aggregations*/
 			currentRule = new Rule(head, body, new ArrayList<>());
-			if(this.hasSelectionCondition()) {
+			if(this.numberOfSelectionConditions>0 && this.hasSelectionCondition()) {
 				currentRule = conditions.addConditions(currentRule);
 				this.numberOfSelectionConditions--;
 			}
@@ -523,47 +692,90 @@ public class ModelGenerator {
 			this.resultModel.readRule(currentRule);
 			if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
 
-			/*update data structure for existentials*/
-			if(isExistential && this.firstExistentialHead == null)
-				this.firstExistentialHead = new Atom(head.getName(),head.getArguments());
-
-
-			/*update data structures for output sequence*/
-			chaseStepsFinished = true;
+			/*update data structures for input-output sequences*/
+			currentChaseSteps++;
 			for(String outName : this.outputAtomNames){
-				if(this.cSteps.get(outName).intValue()!=0){
-					chaseStepsFinished = false;
+				/*if current number of chase steps is equal to the max chase steps for an output atom*/
+				if(this.maxCSteps.get(outName).intValue()-currentChaseSteps==0 && !cLastMain.containsKey(outName))
+					/*the output rule will have this atom in the body*/
+					cLastMain.put(outName, body.get(0).getAtom());
+			}
+			maxChaseStepsFinished = true;
+			for(String outName : this.outputAtomNames){
+				if(this.maxCSteps.get(outName).intValue()-currentChaseSteps>0){
+					this.numberOfInputOutputSequences--;
+					maxChaseStepsFinished = false;
 					break;
 				}
 			}
 
-			/*update data structures for recursive sequence*/
+			/*update data structures for recursive sequences*/
 			if(!isRoot){
 				for(String rec : this.indirectRecursionName){
 					if(this.rLength.get(rec).intValue()>1)
 						this.rLength.put(rec, this.rLength.get(rec)-1);
 					if(this.rLength.get(rec).intValue()==1 && !this.rLast.containsKey(rec)){
 						this.rLast.put(rec, head);
-						if(this.recNonLinearJoinNames.contains(rec) && !this.bodyRuleForIndNonLinRecJoinRightAtom.containsKey(rec))
-							this.bodyRuleForIndNonLinRecJoinRightAtom.put(rec, body.get(0).getAtom());
+						if(this.recLeftRightJoinNames.contains(rec) && !this.indLeftRightRecJoinBodyAtoms.containsKey(rec))
+							this.indLeftRightRecJoinBodyAtoms.put(rec, body.get(0).getAtom());
 					}
 
 				}
 			}
 
+			/*only one root in the program*/
 			if(isRoot){
 				isRoot = false;
 				this.root = currentRule;
 			}
+		}
+
+
+		if (log.isDebugEnabled()) log.debug("Generating rules for main input-output closures");
+		System.out.println("\n=====Generating rules for main input-output closures=====");
+		for(String outputAtomName : this.outputAtomNames) {
+
+			/*define the BODY of the rule*/
+			List<Literal> body;
+
+			/*build body of current rule*/
+			LinearRuleGenerator l = new LinearRuleGenerator();
+			body = new ArrayList<>();
+			body.add(l.createLinearBodyOutputRule(cLastMain.get(outputAtomName)));
+			this.numberOfLinearRules--;
+
+			/*define the HEAD of the rule*/
+			boolean isBodyAffected = this.affectedAtomNames.contains(body.get(0).getAtom().getName());
+			boolean isDangerous = false;
+			if(this.numberOfDangerousRules>0 && isBodyAffected){
+				isDangerous = true;
+				this.numberOfDangerousRules--;
+			}
+			/*define whether the rule is existential*/
+			boolean isExistential = false;
+			if(this.numberOfExistentialRules>0 && !isDangerous){
+				isExistential = true;
+				this.numberOfExistentialRules--;
+			}
+
+			/*build head of current rule*/
+			Atom head = l.createHeadOutputRule(body, outputAtomName, isBodyAffected, isDangerous, isExistential);
+
+			/*complete the creation of the rule*/
+			currentRule = new Rule(head, body, new ArrayList<>());
+
+			/*add rule to the model*/
+			this.resultModel.readRule(currentRule);
+			if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
 		}
 	}
 
 
 
 	/**
-	 * It generates rules for recursive cycles
+	 * It generates rules for recursive sequences in main branch
 	 */
-	private void generateRulesForRecursions(){
+	private void generateRulesForRecursiveSequences(){
 
 		/*update data structures for recursive sequence*/
 		boolean readyForIndirectRecursion = true;
@@ -574,13 +786,14 @@ public class ModelGenerator {
 			}
 		}
 
-		if (log.isDebugEnabled()) log.debug("Generating rules for indirect recursive cycles");
-		System.out.println("\n=====Generating rules for indirect recursive cycles=====");
+
+		if (log.isDebugEnabled()) log.debug("Generating rules for indirect recursive sequences");
+		System.out.println("\n=====Generating rules for indirect recursive sequences=====");
 		while(!readyForIndirectRecursion){
 			Rule currentRule;
 
 			/*define the BODY of the rule*/
-			List<Literal> body = new ArrayList<>();
+			List<Literal> body;
 
 			/*define whether the rule is linear or join*/	
 			String linearOrJoin = this.defineTypeOfRule();
@@ -588,11 +801,12 @@ public class ModelGenerator {
 			/*choose the type of join, if needed*/
 			this.typeOfJoin = null;
 			if(linearOrJoin.equals(ModelGenerator.joinRule))
-				this.typeOfJoin = this.defineAndUpdateTypeOfJoin(lastAtomInHead);
+				this.typeOfJoin = this.defineAndUpdateTypeOfJoin(this.lastAtomInHead,null);
 
 			/*build body of current rule*/
 			if(linearOrJoin.equals(ModelGenerator.linearRule) || this.typeOfJoin==null){
 				LinearRuleGenerator l = new LinearRuleGenerator();
+				body = new ArrayList<>();
 				body.add(l.createLinearBodyRecursiveSteps(this.lastAtomInHead));
 				this.numberOfLinearRules--;
 			}
@@ -601,7 +815,6 @@ public class ModelGenerator {
 				body = j.createJoinBodyRecursiveSteps(this.lastAtomInHead,this.typeOfJoin,this.isGuarded);
 				this.numberOfJoinRules--;
 			}
-
 
 			/*define the HEAD of the rule*/
 			Atom head;
@@ -628,7 +841,7 @@ public class ModelGenerator {
 			}
 			/*define whether the rule is existential*/
 			boolean isExistential = false;
-			if(this.numberOfExistentialRules>0 && !isDangerous){
+			if(this.numberOfExistentialRules>1 && !isDangerous){
 				isExistential = this.isExistentialRule();
 				if(isExistential)
 					this.numberOfExistentialRules--;
@@ -636,15 +849,14 @@ public class ModelGenerator {
 
 			/*build head of current rule*/
 			LinearRuleGenerator l = new LinearRuleGenerator();
-			head = l.createHeadRecursiveSteps(body, isBodyAffected, isDangerous, isExistential);;
-			this.idbNumVariables.put(head.getName(), head.getArguments().size());
+			head = l.createHeadRecursiveSteps(body,isBodyAffected,isDangerous,isExistential);;
 
 			/*update last atom in head*/
 			this.lastAtomInHead = head;
 
-			/*here we COMPLETE the creation of the rule, adding possible conditions*/
+			/*complete the creation of the rule, adding possible conditions*/
 			currentRule = new Rule(head, body, new ArrayList<>());
-			if(this.hasSelectionCondition()) {
+			if(this.numberOfSelectionConditions>0 && this.hasSelectionCondition()) {
 				currentRule = conditions.addConditions(currentRule);
 				this.numberOfSelectionConditions--;
 			}
@@ -654,22 +866,17 @@ public class ModelGenerator {
 			if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
 
 
-			/*update data structures for recursive sequence*/
+			/*update data structures for recursive sequences*/
 			for(String rec : this.indirectRecursionName){
 				if(this.rLength.get(rec).intValue()>1)
 					this.rLength.put(rec, this.rLength.get(rec)-1);
 				if(this.rLength.get(rec).intValue()==1 && !this.rLast.containsKey(rec)){
 					this.rLast.put(rec, head);
 					/*if it is non linear, update corresponding map to remember it*/
-					if(this.recNonLinearJoinNames.contains(rec) && !this.bodyRuleForIndNonLinRecJoinRightAtom.containsKey(rec))
-						this.bodyRuleForIndNonLinRecJoinRightAtom.put(rec, body.get(0).getAtom());
+					if(this.recLeftRightJoinNames.contains(rec) && !this.indLeftRightRecJoinBodyAtoms.containsKey(rec))
+						this.indLeftRightRecJoinBodyAtoms.put(rec, body.get(0).getAtom());
 				}	
 			}
-
-			/*update data structure for existentials*/
-			if(isExistential && this.firstExistentialHead == null)
-				this.firstExistentialHead = new Atom(head.getName(),head.getArguments());
-
 			readyForIndirectRecursion = true;
 			for(String recName : this.indirectRecursionName){
 				if(this.rLength.get(recName).intValue()!=1){
@@ -677,70 +884,72 @@ public class ModelGenerator {
 					break;
 				}
 			}
+
 		}
 
 
-		if (log.isDebugEnabled()) log.debug("Generating rules for indirect recursive closure");
-		System.out.println("\n=====Generating rules for indirect recursive closure=====");
+		if (log.isDebugEnabled()) log.debug("Generating rules for indirect recursive closures");
+		System.out.println("\n=====Generating rules for indirect recursive closures=====");
 		for(String recName : this.indirectRecursionName){
-
-			Atom rLast = this.rLast.get(recName);
-
 			Rule currentRule;
+
 			/*whether the rule has a right recursive join*/
 			boolean isRightRecJoin = false;
 
 			/*define the BODY of the rule*/
-			List<Literal> body = new ArrayList<>();
+			List<Literal> body;
 
-			/*choose the type of join, if needed*/
+			/*get the previous atom which links the recursive closure to the program*/
+			Atom rLast = this.rLast.get(recName);
+
+			/*choose the type of recursive join and join, if needed*/
 			this.typeOfJoin = null;
-			if(!this.recLinNames.contains(recName))
-				this.typeOfJoin = this.defineAndUpdateTypeOfJoin(lastAtomInHead);
+			String typeOfRecJoin = null;
+			if(!this.recLinNames.contains(recName)) {
+				/*choose the type of recursive join*/
+				if(this.recLeftJoinNames.contains(recName))
+					typeOfRecJoin = leftRecJoin;
+				else
+					if(this.recRightJoinNames.contains(recName)) {
+						typeOfRecJoin = rightRecJoin;
+						isRightRecJoin = true;
+					}
+					else
+						typeOfRecJoin = leftRightRecJoin;
+				/*choose the type of join*/
+				this.typeOfJoin = this.defineAndUpdateTypeOfJoin(rLast,typeOfRecJoin);
+			}
 
 			/*build body of current rule*/
 			if(this.recLinNames.contains(recName) || this.typeOfJoin==null){
 				LinearRuleGenerator l = new LinearRuleGenerator();
+				body = new ArrayList<>();
 				body.add(l.createLinearBodyIndirectRecursiveClosure(rLast));
 				this.numberOfLinearRules--;
 			}
 			else{
 				JoinRuleGenerator j = new JoinRuleGenerator();
-				/*choose the type of recursive join*/
-				String typeOfRecJoin;
-				if(this.recLeftJoinNames.contains(recName))
-					typeOfRecJoin = "leftRecJoin";
-				else
-					if(this.recRightJoinNames.contains(recName)) {
-						typeOfRecJoin = "rightRecJoin";
-						isRightRecJoin = true;
-					}
-					else
-						typeOfRecJoin = "nonLinearRecJoin";
-
 				body = j.createJoinBodyIndirectRecursiveClosure(rLast,this.typeOfJoin,typeOfRecJoin,recName,this.isGuarded);//,harmlessOrDangerous
 				this.numberOfJoinRules--;
 			}
-
 
 			/*define the HEAD of the rule*/
 			Atom head;
 
 			/*check whether the body is affected*/
 			boolean isBodyAffected;
-			if(isRightRecJoin)
-				isBodyAffected = this.affectedAtomNames.contains(body.get(1).getAtom().getName());
-			else
+			if(!isRightRecJoin)
 				isBodyAffected = this.affectedAtomNames.contains(body.get(0).getAtom().getName());
+			else
+				isBodyAffected = this.affectedAtomNames.contains(body.get(1).getAtom().getName());
 
 			/*build head of current rule*/
 			RuleGenerator l = new LinearRuleGenerator();
 			head = l.createHeadIndirectRecursiveClosure(body, this.root.getHead().get(0), isBodyAffected, isRightRecJoin);
 
-
 			/*complete the creation of the rule, adding possible conditions*/
 			currentRule = new Rule(head, body, new ArrayList<>());
-			if(this.hasSelectionCondition()) {
+			if(this.numberOfSelectionConditions>0 && this.hasSelectionCondition()) {
 				currentRule = conditions.addConditions(currentRule);
 				this.numberOfSelectionConditions--;
 			}
@@ -748,29 +957,30 @@ public class ModelGenerator {
 			/*add rule to the model*/
 			this.resultModel.readRule(currentRule);
 			if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
+
 		}
 
 
-
-		if (log.isDebugEnabled()) log.debug("Generating rules for direct recursive closure");
-		System.out.println("\n=====Generating rules for direct recursive closure=====");
+		if (log.isDebugEnabled()) log.debug("Generating rules for direct recursive closures");
+		System.out.println("\n=====Generating rules for direct recursive closures=====");
 		for(String recName : this.directRecursionName){
-
 			Rule currentRule;
+
 			/*whether the rule has a right recursive join*/
 			boolean isRightRecJoin = false;
 
 			/*define the BODY of the rule*/
-			List<Literal> body = new ArrayList<>();
+			List<Literal> body;
 
 			/*choose the type of join, if needed*/
 			this.typeOfJoin = null;
 			if(!this.recLinNames.contains(recName))
-				this.typeOfJoin = this.defineAndUpdateTypeOfJoin(lastAtomInHead);
+				this.typeOfJoin = this.defineAndUpdateTypeOfJoin(lastAtomInHead, null);
 
 			/*build body of current rule*/
 			if(this.recLinNames.contains(recName) || this.typeOfJoin==null){
 				LinearRuleGenerator l = new LinearRuleGenerator();
+				body = new ArrayList<>();
 				body.add(l.createLinearBodyDirectRecursiveClosure());
 				this.numberOfLinearRules--;
 			}
@@ -786,31 +996,29 @@ public class ModelGenerator {
 						isRightRecJoin = true;
 					}
 					else
-						typeOfRecJoin = "nonLinearRecJoin";
+						typeOfRecJoin = "leftRightRecJoin";
 
-				body = j.createJoinBodyDirectRecursiveClosure(this.typeOfJoin,typeOfRecJoin,recName,this.isGuarded);
+				body = j.createJoinBodyDirectRecursiveClosure(this.typeOfJoin, typeOfRecJoin, recName, this.isGuarded);
 				this.numberOfJoinRules--;
 			}
-
 
 			/*define the HEAD of the rule*/
 			Atom head;
 
 			/*check whether the body is affected*/
 			boolean isBodyAffected;
-			if(isRightRecJoin)
-				isBodyAffected = this.affectedAtomNames.contains(body.get(1).getAtom().getName());
-			else
+			if(!isRightRecJoin)
 				isBodyAffected = this.affectedAtomNames.contains(body.get(0).getAtom().getName());
+			else
+				isBodyAffected = this.affectedAtomNames.contains(body.get(1).getAtom().getName());
 
 			/*build head of current rule*/
 			LinearRuleGenerator l = new LinearRuleGenerator();
-			head = l.createHeadDirectRecursiveClosure(this.literalDirectRec.getAtom(), isBodyAffected);
-
+			head = l.createHeadDirectRecursiveClosure(body, this.literalDirectRec.getAtom(), isBodyAffected, isRightRecJoin);
 
 			/*complete the creation of the rule, adding possible conditions*/
 			currentRule = new Rule(head, body, new ArrayList<>());
-			if(this.hasSelectionCondition()) {
+			if(this.numberOfSelectionConditions>0 && this.hasSelectionCondition()) {
 				currentRule = conditions.addConditions(currentRule);
 				this.numberOfSelectionConditions--;
 			}
@@ -818,39 +1026,43 @@ public class ModelGenerator {
 			/*add rule to the model*/
 			this.resultModel.readRule(currentRule);
 			if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
+
 		}
 
 
+		if (log.isDebugEnabled()) log.debug("Generating linear rules for indirect non-linear recursion link to main branch");
+		//		System.out.println("\n=====Generating linear rules for indirect non-linear recursion link to main branch=====");
+		for(String recLeftRightName : this.indLeftRightRecJoinBodyAtoms.keySet()){
 
-		if (log.isDebugEnabled()) log.debug("Generating rules for indirect non-linear recursion link to main program");
-		System.out.println("\n=====Generating rules for indirect non-linear recursion link to main program=====");
-		for(String recNonLinName : this.bodyRuleForIndNonLinRecJoinRightAtom.keySet()){
-
-			Atom rightAtomInNonLinRecJoin = this.recNonLinIndJoinRightAtom.get(recNonLinName);
-			if(rightAtomInNonLinRecJoin!=null) {
-				Atom bodyForRightAtomInNonLinRecJoin = this.bodyRuleForIndNonLinRecJoinRightAtom.get(recNonLinName);
+			/*atom in head of rule, already generated as body of non lin rec closure join*/
+			Atom rightAtomInLeftRightRecJoin = this.indLeftRightRecJoinHeadAtoms.get(recLeftRightName);
+			if(rightAtomInLeftRightRecJoin!=null) {
 				Rule currentRule;
-				/*whether the rule has a right recursive join*/
-				boolean isRightRecJoin = false;
 
 				/*define the BODY of the rule*/
-				List<Literal> body = new ArrayList<>();
+				List<Literal> body;
+
+				/*atom in body of rule which links rule to main branch*/
+				Atom bodyForRightAtomInLeftRightRecJoin = this.indLeftRightRecJoinBodyAtoms.get(recLeftRightName);
+
+				/*build body of current rule*/
 				LinearRuleGenerator l = new LinearRuleGenerator();
-				body.add(l.createLinearBodyChaseSteps(bodyForRightAtomInNonLinRecJoin, false));
+				body = new ArrayList<>();
+				body.add(l.createLinearBodyChaseSteps(bodyForRightAtomInLeftRightRecJoin,false));
 				this.numberOfLinearRules--;
 
-				/*define the HEAD of the linear rule*/
+				/*define the HEAD of the rule*/
 				Atom head;
 				/*check whether the body is affected*/
 				boolean isBodyAffected = this.affectedAtomNames.contains(body.get(0).getAtom().getName());
 
 				/*build head of current rule*/
 				l = new LinearRuleGenerator();
-				head = l.createHeadIndirectRecursiveClosure(body, rightAtomInNonLinRecJoin, isBodyAffected, isRightRecJoin);
+				head = l.createHeadIndirectRecursiveClosure(body, rightAtomInLeftRightRecJoin, isBodyAffected, false);
 
 				/*complete the creation of the rule, adding possible conditions*/
 				currentRule = new Rule(head, body, new ArrayList<>());
-				if(this.hasSelectionCondition()) {
+				if(this.numberOfSelectionConditions>0 && this.hasSelectionCondition()) {
 					currentRule = conditions.addConditions(currentRule);
 					this.numberOfSelectionConditions--;
 				}
@@ -858,6 +1070,7 @@ public class ModelGenerator {
 				/*add rule to the model*/
 				this.resultModel.readRule(currentRule);
 				if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
+
 			}
 		}
 	}
@@ -865,22 +1078,29 @@ public class ModelGenerator {
 
 
 	/**
-	 * It generates rules to satisfy remaining input requirements
+	 * It generates rules for input-output sequences in secondary branch
 	 */
-	private void generateRulesForCompletion() {
-
-		if (log.isDebugEnabled()) log.debug("Generating rules for program completion");
-		System.out.println("\n=====Generating rules for program completion=====");
+	private void generateRulesForSecondaryInputOutputSequences() {
 
 		/*whether this is the first rule in this sequence*/
 		boolean isNewRuleAfterRoot = true;
+		/*the atom in the main branch that will be linked to each output atom */
+		Map<String,Atom> cLastSecondary = new HashMap<>();
 
+		if (log.isDebugEnabled()) log.debug("Generating rules for secondary branch");
+		System.out.println("\n=====Generating rules for secondary branch=====");
+		Rule currentRule;
+
+
+		if (log.isDebugEnabled()) log.debug("Generating rules for secondary input-output sequences");
+		System.out.println("\n=====Generating rules for secondary input-output sequences=====");
+		int currentChaseSteps = 1;
 		/*generate remaining non existential, non dangerous linear rules in secondary branch of the program*/
-		while((this.numberOfLinearRules-this.numberOfExistentialRules-this.numberOfDangerousRules-this.numberOfOutputAtoms)>0){
-			Rule currentRule;
+		/*while considering that one rule per output atom is required to link the branch to output*/
+		while(this.numberOfInputOutputSequences>0 && (this.numberOfLinearRules-this.numberOfExistentialRules-this.numberOfDangerousRules-this.numberOfOutputPredicates)>0){
 
 			/*define the BODY of the rule*/
-			List<Literal> body = new ArrayList<>();
+			List<Literal> body;
 			/*get last atom in previous head*/
 			Atom lastAtomInHead;
 			if(isNewRuleAfterRoot)
@@ -890,22 +1110,24 @@ public class ModelGenerator {
 
 			/*build body of current rule*/
 			LinearRuleGenerator l = new LinearRuleGenerator();
+			body = new ArrayList<>();
 			body.add(l.createLinearBodySecondaryRule(lastAtomInHead));
 			this.numberOfLinearRules--;
 
 			if(isNewRuleAfterRoot)
 				isNewRuleAfterRoot = false;
 
-			/*define the HEAD of the rule*/				
+			/*define the HEAD of the rule*/
+
+			/*build head of current rule*/
 			Atom head = l.createHeadSecondaryRule(body);
-			this.idbNumVariables.put(head.getName(), head.getArguments().size());
 
 			/*update last atom in head*/
 			this.lastAtomInHead = head;		
 
 			/*complete the creation of the rule, adding possible conditions*/
 			currentRule = new Rule(head, body, new ArrayList<>());
-			if(this.hasSelectionCondition()) {
+			if(this.numberOfSelectionConditions>0 && this.hasSelectionCondition()) {
 				currentRule = conditions.addConditions(currentRule);
 				this.numberOfSelectionConditions--;
 			}
@@ -913,29 +1135,132 @@ public class ModelGenerator {
 			/*add rule to the model*/
 			this.resultModel.readRule(currentRule);
 			if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
+
+			/*update data structures for output rules*/
+			currentChaseSteps++;
+			for(String outName : this.outputAtomNames){
+				/*if current number of chase steps is less than or equal to the max chase steps for an output atom*/
+				if(this.numberOfInputOutputSequences>0 && currentChaseSteps-this.maxCSteps.get(outName).intValue()<=0) {
+					/*the output rule will have this atom in the body*/
+					cLastSecondary.put(outName, body.get(0).getAtom());
+					this.numberOfInputOutputSequences--;
+				}
+			}
+
 		}
 
 
+		if (log.isDebugEnabled()) log.debug("Generating rules for secondary input-output closures");
+		System.out.println("\n=====Generating rules for secondary input-output closures=====");
+		for(String outputAtomName : this.outputAtomNames) {
+			Atom outputAtom = cLastSecondary.get(outputAtomName);
+			/*there might not be a cLastSecondary for each output atom*/
+			/*for instance, the secondary rules might be less than the output atoms*/
+			if(outputAtom!=null) {
+				/*define the BODY of the rule*/
+				List<Literal> body;
+
+				/*build body of current rule*/
+				LinearRuleGenerator l = new LinearRuleGenerator();
+				body = new ArrayList<>();
+				body.add(l.createLinearBodyOutputRule(outputAtom));
+				this.numberOfLinearRules--;
+
+				/*define the HEAD of the rule*/
+				boolean isBodyAffected = this.affectedAtomNames.contains(body.get(0).getAtom().getName());
+				boolean isDangerous = false;
+				if(this.numberOfDangerousRules>0 && isBodyAffected){
+					isDangerous = true;
+					this.numberOfDangerousRules--;
+				}
+				/*define whether the rule is existential*/
+				boolean isExistential = false;
+				if(this.numberOfExistentialRules>0 && !isDangerous){
+					isExistential = true;
+					this.numberOfExistentialRules--;
+				}
+
+				/*build head of current rule*/
+				Atom head = l.createHeadOutputRule(body, outputAtomName, isBodyAffected, isDangerous, isExistential);
+
+				/*complete the creation of the rule*/
+				currentRule = new Rule(head, body, new ArrayList<>());
+
+				/*add rule to the model*/
+				this.resultModel.readRule(currentRule);
+				if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
+			}
+		}
+	}
+
+
+
+	/**
+	 * It generates rules for input-output sequences in tertiary branches
+	 */
+	private void generateRulesForTertiaryInputOutputSequences() {
+
+		if (log.isDebugEnabled()) log.debug("Generating rules for tertiary branches");
+		System.out.println("\n=====Generating rules for tertiary branches=====");
 		/*generate remaining rules in tertiary branches of the program*/
 
-		/*if there is at least one existential rule in the main program*/
-		if(this.firstExistentialHead != null) {
+		/*if required, generate a son of the root rule with an existential*/
+		/*it will be the root for all the tertiary branches*/
+		if(this.numberOfDangerousRules>0 || this.numberOfHarmlessHarmlessJoinsWithWard>0 || 
+				this.numberOfHarmlessHarmfulJoins>0 || this.numberOfHarmfulHarmfulJoins>0) {
 
+			/*define the BODY of the rule*/
+			List<Literal> body;
+
+			/*build body of current rule*/
+			LinearRuleGenerator l = new LinearRuleGenerator();
+			body = new ArrayList<>();
+			body.add(l.createLinearBodyTertiaryRule(this.root.getHead().get(0)));
+			this.numberOfLinearRules--;
+
+			/*define the HEAD of the rule*/
+
+			/*build head of current rule*/
+			Atom head = l.createHeadTertiaryRule(body, false, false, true, false);
+			this.numberOfExistentialRules--;
+
+			/*complete the creation of the rule, adding possible conditions*/
+			this.rootExistentialSon = new Rule(head, body, new ArrayList<>());
+			if(this.numberOfSelectionConditions>0) {
+				this.rootExistentialSon = conditions.addConditions(this.rootExistentialSon);
+				this.numberOfSelectionConditions--;
+			}
+
+			/*add rule to the model*/
+			this.resultModel.readRule(this.rootExistentialSon);
+			if (log.isDebugEnabled()) log.debug("Generated rule: " + this.rootExistentialSon.toString());
+
+		}
+
+
+		/*if the son of the root rule could be generated*/
+		/*i.e., there is at least one existential rule in the program*/
+		if(this.rootExistentialSon != null) {
 			/*generate remaining existential rules*/
 			while(this.numberOfExistentialRules>0){
 				Rule currentRule;
 
-				/*define the BODY of the linear rule*/
-				List<Literal> body = new ArrayList<>();
-				LinearRuleGenerator l = new LinearRuleGenerator();	
-				body.add(l.createLinearBodyTertiaryRule(this.firstExistentialHead));
+				/*define the BODY of the rule*/
+				List<Literal> body;
+
+				/*build body of current rule*/
+				LinearRuleGenerator l = new LinearRuleGenerator();
+				body = new ArrayList<>();
+				body.add(l.createLinearBodyTertiaryRule(this.rootExistentialSon.getHead().get(0)));
 				this.numberOfLinearRules--;
 
-				/*define the HEAD of the linear rule*/
-				Atom head = l.createHeadTertiaryRule(body, true, false, true);
+				/*define the HEAD of the rule*/
+
+				/*build head of current rule*/
+				Atom head = l.createHeadTertiaryRule(body, true, false, true, true);
 				this.numberOfExistentialRules--;
 
-				/*complete the creation of the linear rule, adding possible conditions*/
+				/*complete the creation of the rule, adding possible conditions*/
 				currentRule = new Rule(head, body, new ArrayList<>());
 				if(this.numberOfSelectionConditions>0) {
 					currentRule = conditions.addConditions(currentRule);
@@ -945,6 +1270,7 @@ public class ModelGenerator {
 				/*add rule to the model*/
 				this.resultModel.readRule(currentRule);
 				if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
+
 			}
 
 
@@ -952,17 +1278,22 @@ public class ModelGenerator {
 			while(this.numberOfDangerousRules>0){
 				Rule currentRule;
 
-				/*define the BODY of the linear rule*/
-				List<Literal> body = new ArrayList<>();
+				/*define the BODY of the rule*/
+				List<Literal> body;
+
+				/*build body of current rule*/
 				LinearRuleGenerator l = new LinearRuleGenerator();	
-				body.add(l.createLinearBodyTertiaryRule(this.firstExistentialHead));
+				body = new ArrayList<>();
+				body.add(l.createLinearBodyTertiaryRule(this.rootExistentialSon.getHead().get(0)));
 				this.numberOfLinearRules--;
 
-				/*define the HEAD of the linear rule*/
-				Atom head = l.createHeadTertiaryRule(body, true, true, false);
+				/*define the HEAD of the rule*/
+
+				/*build head of current rule*/
+				Atom head = l.createHeadTertiaryRule(body, true, true, false, true);
 				this.numberOfDangerousRules--;
 
-				/*complete the creation of the linear rule, adding possible conditions*/
+				/*complete the creation of the rule, adding possible conditions*/
 				currentRule = new Rule(head, body, new ArrayList<>());
 				if(this.numberOfSelectionConditions>0) {
 					currentRule = conditions.addConditions(currentRule);
@@ -972,26 +1303,28 @@ public class ModelGenerator {
 				/*add rule to the model*/
 				this.resultModel.readRule(currentRule);
 				if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
+
 			}
 
-			
 			/*generate remaining harmless-harmless join rules with ward*/
 			while(this.numberOfHarmlessHarmlessJoinsWithWard>0) {
 				Rule currentRule;
 
 				/*define the BODY of the rule*/
-				List<Literal> body = new ArrayList<>();
+				List<Literal> body;
 
 				/*build body of current rule*/
 				JoinRuleGenerator j = new JoinRuleGenerator();
-				body = j.createJoinBodyTertiaryRule(this.firstExistentialHead,joinhhW,this.isGuarded);
+				body = j.createJoinBodyTertiaryRule(this.rootExistentialSon.getHead().get(0),joinhhW,this.isGuarded);
 				this.numberOfJoinRules--;
 				this.numberOfHarmlessHarmlessJoinsWithWard--;
 
-				/*define the HEAD of the linear rule*/
-				Atom head = j.createHeadTertiaryRule(body, true, false, false);
+				/*define the HEAD of the rule*/
 
-				/*complete the creation of the join rule, adding possible conditions*/
+				/*build head of current rule*/
+				Atom head = j.createHeadTertiaryRule(body, true, false, false, true);
+
+				/*complete the creation of the rule, adding possible conditions*/
 				currentRule = new Rule(head, body, new ArrayList<>());
 				if(this.numberOfSelectionConditions>0) {
 					currentRule = conditions.addConditions(currentRule);
@@ -1001,26 +1334,29 @@ public class ModelGenerator {
 				/*add rule to the model*/
 				this.resultModel.readRule(currentRule);
 				if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
+
 			}
-			
+
 
 			/*generate remaining harmless-harmful join rules*/
 			while(this.numberOfHarmlessHarmfulJoins>0) {
 				Rule currentRule;
 
 				/*define the BODY of the rule*/
-				List<Literal> body = new ArrayList<>();
+				List<Literal> body;
 
 				/*build body of current rule*/
 				JoinRuleGenerator j = new JoinRuleGenerator();
-				body = j.createJoinBodyTertiaryRule(this.firstExistentialHead,joinhH,this.isGuarded);
+				body = j.createJoinBodyTertiaryRule(this.rootExistentialSon.getHead().get(0),joinhH,this.isGuarded);
 				this.numberOfJoinRules--;
 				this.numberOfHarmlessHarmfulJoins--;
 
-				/*define the HEAD of the linear rule*/
-				Atom head = j.createHeadTertiaryRule(body, true, false, false);
+				/*define the HEAD of the rule*/
 
-				/*complete the creation of the join rule, adding possible conditions*/
+				/*build head of current rule*/
+				Atom head = j.createHeadTertiaryRule(body, true, false, false, true);
+
+				/*complete the creation of the rule, adding possible conditions*/
 				currentRule = new Rule(head, body, new ArrayList<>());
 				if(this.numberOfSelectionConditions>0) {
 					currentRule = conditions.addConditions(currentRule);
@@ -1030,26 +1366,29 @@ public class ModelGenerator {
 				/*add rule to the model*/
 				this.resultModel.readRule(currentRule);
 				if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
+
 			}
-			
-			
+
+
 			/*generate remaining harmful-harmful join rules*/
 			while(this.numberOfHarmfulHarmfulJoins>0) {
 				Rule currentRule;
 
 				/*define the BODY of the rule*/
-				List<Literal> body = new ArrayList<>();
+				List<Literal> body;
 
 				/*build body of current rule*/
 				JoinRuleGenerator j = new JoinRuleGenerator();
-				body = j.createJoinBodyTertiaryRule(this.firstExistentialHead,joinHH,this.isGuarded);
+				body = j.createJoinBodyTertiaryRule(this.rootExistentialSon.getHead().get(0),joinHH,this.isGuarded);
 				this.numberOfJoinRules--;
 				this.numberOfHarmfulHarmfulJoins--;
 
-				/*define the HEAD of the linear rule*/
-				Atom head = j.createHeadTertiaryRule(body, true, false, false);
+				/*define the HEAD of the rule*/
 
-				/*complete the creation of the join rule, adding possible conditions*/
+				/*build head of current rule*/
+				Atom head = j.createHeadTertiaryRule(body, true, false, false, true);
+
+				/*complete the creation of the rule, adding possible conditions*/
 				currentRule = new Rule(head, body, new ArrayList<>());
 				if(this.numberOfSelectionConditions>0) {
 					currentRule = conditions.addConditions(currentRule);
@@ -1059,27 +1398,30 @@ public class ModelGenerator {
 				/*add rule to the model*/
 				this.resultModel.readRule(currentRule);
 				if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
+
 			}
 		}
 
 
-		/*generate remaining harmless-harmless join rules without ward, also if the other types could not be created*/
+		/*generate remaining harmless-harmless join rules without ward, even if the other types could not be created*/
 		while(this.numberOfJoinRules>0) {
 			Rule currentRule;
 
 			/*define the BODY of the rule*/
-			List<Literal> body = new ArrayList<>();
+			List<Literal> body;
 
 			/*build body of current rule*/
 			JoinRuleGenerator j = new JoinRuleGenerator();
-			body = j.createJoinBodyTertiaryRule(this.root.getBody().get(0).getAtom(),joinhhNW,this.isGuarded);
+			body = j.createJoinBodyTertiaryRule(this.root.getHead().get(0),joinhhNW,this.isGuarded);
 			this.numberOfJoinRules--;
 			this.numberOfHarmlessHarmlessJoinsWithoutWard--;
 
-			/*define the HEAD of the linear rule*/
-			Atom head = j.createHeadTertiaryRule(body, false, false, false);
+			/*define the HEAD of the rule*/
 
-			/*complete the creation of the join rule, adding possible conditions*/
+			/*build head of current rule*/
+			Atom head = j.createHeadTertiaryRule(body, false, false, false, true);
+
+			/*complete the creation of the rule, adding possible conditions*/
 			currentRule = new Rule(head, body, new ArrayList<>());
 			if(this.numberOfSelectionConditions>0) {
 				currentRule = conditions.addConditions(currentRule);
@@ -1089,58 +1431,10 @@ public class ModelGenerator {
 			/*add rule to the model*/
 			this.resultModel.readRule(currentRule);
 			if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
+
 		}
 	}
 
-
-
-	/**
-	 * It generates rules to complete input-output sequence
-	 */
-	private void generateRulesForOutput(){
-
-		if (log.isDebugEnabled()) log.debug("Generating rules for input-output sequence closure");
-		System.out.println("\n=====Generating rules for input-output sequence closure=====");
-		for(String outputAtomName : this.outputAtomNames) {
-			Rule currentRule;
-			OutputAnnotation outputAnnot;
-
-			/*define the BODY of the linear rule*/
-			List<Literal> body = new ArrayList<>();
-			LinearRuleGenerator l = new LinearRuleGenerator();
-			body.add(l.createLinearBodyOutputRule(this.cLast.get(outputAtomName)));
-			this.numberOfLinearRules--;
-
-			/*define the HEAD of the linear rule*/
-			boolean isBodyAffected = this.affectedAtomNames.contains(body.get(0).getAtom().getName());
-			boolean isDangerous = false;
-			if(this.numberOfDangerousRules>0 && isBodyAffected){
-				isDangerous = true;
-				this.numberOfDangerousRules--;
-			}
-			/*define whether the rule is existential*/
-			boolean isExistential = false;
-			if(this.numberOfExistentialRules>0 && !isDangerous){
-				isExistential = true;
-				this.numberOfExistentialRules--;
-			}
-			Atom head = l.createHeadOutputRule(body, outputAtomName, isBodyAffected, isDangerous, isExistential);
-
-			/*complete the creation of the linear rule, adding possible conditions*/
-			currentRule = new Rule(head, body, new ArrayList<>());
-			if(this.numberOfSelectionConditions>0) {
-				currentRule = conditions.addConditions(currentRule);
-				this.numberOfSelectionConditions--;
-			}
-
-			/*add rule to the model*/
-			this.resultModel.readRule(currentRule);
-			if (log.isDebugEnabled()) log.debug("Generated rule: " + currentRule.toString());
-			outputAnnot = new OutputAnnotation(outputAtomName);
-			this.resultModel.readAnnotation(outputAnnot);
-		}
-
-	}
 
 
 }

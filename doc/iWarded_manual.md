@@ -37,7 +37,7 @@ This project is supported by the Vienna Science and Technology fund (WWTF) grant
 iWarded is written in Java and it uses ```Maven``` for building.  
 
 ### System requirements
-- JDK 1.8.0 or higher;
+- JDK 15 or higher;
 - Maven 3.
 
 ### Installation steps

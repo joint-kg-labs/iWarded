@@ -16,7 +16,7 @@ Please refer to the [manual](https://github.com/joint-kg-labs/iWarded/blob/main/
 ## Installing iWarded
 iWarded is written in Java and uses ```Maven``` for building.  
 ### System requirements
-- JDK 1.8.0 or higher;
+- JDK 15 or higher;
 - Maven 3.
 
 ### Installation steps

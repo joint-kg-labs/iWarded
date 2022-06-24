@@ -2,6 +2,8 @@ package org.vadalog.iwarded.model.annotations;
 
 import java.util.Collections;
 
+
+
 /**
  * @author luigibellomarini
  * It declares that a predicate is an input

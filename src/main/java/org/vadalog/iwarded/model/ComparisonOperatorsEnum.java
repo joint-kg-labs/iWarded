@@ -1,6 +1,7 @@
 package org.vadalog.iwarded.model;
 
 
+
 /**
  * It is a comparison operator that can be used in expressions.
  * @author luigibellomarini

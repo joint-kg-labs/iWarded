@@ -1,16 +1,16 @@
 # iWarded Scenario Configuration File
 
-# Number of Input Atoms
-NumberOfInputAtoms = 100
+# Number of Input Predicates
+NumberOfInputPredicates = 100
 
-# Number of Output Atoms
-NumberOfOutputAtoms = 10
+# Number of Output Predicates
+NumberOfOutputPredicates = 10
 
-# Average number of Variables per Atom
-AverageVarsInAtom = 1
+# Average number of Variables per Predicate
+AverageVarsInPredicate = 1
 
-# Variance of Variables per Atom
-VarianceVarsInAtom = 1.0
+# Variance of Variables per Predicate
+VarianceVarsInPredicate = 1.0
 
 # Number of Existential Rules
 NumberOfExistentialRules = 100
@@ -39,8 +39,11 @@ NumberOfHarmlessHarmfulJoins = 10
 # Number of Harmful-Harmful Joins
 NumberOfHarmfulHarmfulJoins = 10
 
-# Average Number of Chase Steps from Input to Output
-AverageChaseSteps = 10
+# Number of Input-Output Sequences
+NumberOfInputOutputSequences = 10
+
+# Average Length of Input-Output Sequences
+AverageInputOutputSequenceLength = 10
 
 # Number of Linear Recursions
 NumberOfLinearRecursions = 0
@@ -51,8 +54,8 @@ NumberOfLeftJoinRecursions = 3
 # Number of Right-Join Recursions
 NumberOfRightJoinRecursions = 3
 
-# Number of Non-Linear Join Recursions
-NumberOfNonLinearJoinRecursions = 3
+# Number of Left-Right Join Recursions
+NumberOfLeftRightJoinRecursions = 3
 
 # Average Recursion length
 AverageRecursionLength = 3
@@ -61,13 +64,16 @@ AverageRecursionLength = 3
 NumberOfSelectionConditions = 0
 
 # Average Selectivity
-AverageSelectivity = 0
+AverageSelectivity = 3
 
 # Number of records in CSV files
-NumberOfRecordsCSV = 10
+NumberOfRecordsCSV = 100
 
 # Guardedness of the Program
 IsGuarded = false
+
+# Shyness of the Program
+IsShy = false
 
 # Name of the Program
 ProgramName = complexProgram

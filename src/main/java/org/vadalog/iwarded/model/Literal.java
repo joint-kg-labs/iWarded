@@ -2,6 +2,8 @@ package org.vadalog.iwarded.model;
 
 import java.util.List;
 
+
+
 /**
  * Copyright (C) 2021  authors: Teodoro Baldazzi, Luigi Bellomarini, Emanuel Sallinger
  * This program is free software: you can redistribute it and/or modify

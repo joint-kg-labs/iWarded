@@ -1,0 +1,85 @@
+# iWarded Scenario Configuration File
+
+# Number of Input Predicates
+NumberOfInputPredicates = 10
+
+# Number of Output Predicates
+NumberOfOutputPredicates = 10
+
+# Average number of Variables per Predicate
+AverageVarsInPredicate = 1
+
+# Variance of Variables per Predicate
+VarianceVarsInPredicate = 1.0
+
+# Number of Existential Rules
+NumberOfExistentialRules = 50
+
+# Average number of Existentially Quantified Variables per Rule
+AverageEVarsInRule = 1
+
+# Variance of Existentially Quantified Variables per Rule
+VarianceEVarsInRule = 1.0
+
+# Number of Dangerous Rules
+NumberOfDangerousRules = 10
+
+# Number of Linear Rules
+NumberOfLinearRules = 70
+
+# Number of Harmless-Harmless Joins with Ward
+NumberOfHarmlessHarmlessJoinsWithWard = 9
+
+# Number of Harmless-Harmless Joins without Ward
+NumberOfHarmlessHarmlessJoinsWithoutWard = 1
+
+# Number of Harmless-Harmful Joins
+NumberOfHarmlessHarmfulJoins = 10
+
+# Number of Harmful-Harmful Joins
+NumberOfHarmfulHarmfulJoins = 10
+
+# Number of Input-Output Sequences
+NumberOfInputOutputSequences = 30
+
+# Average Length of Input-Output Sequences
+AverageInputOutputSequenceLength = 5
+
+# Number of Linear Recursions
+NumberOfLinearRecursions = 40
+
+# Number of Left-Join Recursions
+NumberOfLeftJoinRecursions = 10
+
+# Number of Right-Join Recursions
+NumberOfRightJoinRecursions = 0
+
+# Number of Left-Right Join Recursions
+NumberOfLeftRightJoinRecursions = 0
+
+# Average Recursion length
+AverageRecursionLength = 5
+
+# Number of Selection Conditions
+NumberOfSelectionConditions = 0
+
+# Average Selectivity
+AverageSelectivity = 100
+
+# Number of records in CSV files
+NumberOfRecordsCSV = 10000
+
+# Guardedness of the Program
+IsGuarded = false
+
+# Shyness of the Program
+IsShy = false
+
+# Number of Linear EGDs
+NumberOfLinearEGDs = 0
+
+# Number of Join EGDs
+NumberOfJoinEGDs = 0
+
+# Name of the Program
+ProgramName = synthE

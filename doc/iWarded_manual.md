@@ -6,8 +6,9 @@ iWarded is a benchmarking system for Warded Datalog+/- reasoning.
 
 In particular it allows:
 * building warded Datalog+/- benchmark settings
-* building guarded Datalog+/- benchmark settings (which we sometimes call "iGuarded")
-* building various subsets of warded and/or guarded Datalog+/- benchmark settings via a multitude of parameters
+* building guarded Datalog+/- benchmark settings
+* building shy Datalog+/- benchmark settings
+* building various subsets of warded and/or guarded and/or shy Datalog+/- benchmark settings via a multitude of parameters
 
 The benchmark settings it creates consist of synthetic programs and data sources from realistic scenarios with distinct characteristics,
 and are aimed at testing and benchmarking systems that implement warded or guarded Datalog+/- reasoning.
@@ -76,17 +77,17 @@ It makes use of the pre-defined configuration file ```exampleScenarios/tutorialS
 ~~~sh
 # iWarded Scenario Configuration File
 
-# Number of Input Atoms
-NumberOfInputAtoms = 5
+# Number of Input Predicates
+NumberOfInputPredicates = 5
 
-# Number of Output Atoms
-NumberOfOutputAtoms = 3
+# Number of Output Predicates
+NumberOfOutputPredicates = 3
 
-# Average number of Variables per Atom
-AverageVarsInAtom = 1
+# Average number of Variables per Predicate
+AverageVarsInPredicate = 1
 
-# Variance of Variables per Atom
-VarianceVarsInAtom = 1.0
+# Variance of Variables per Predicate
+VarianceVarsInPredicate = 1.0
 
 # Number of Existential Rules
 NumberOfExistentialRules = 3
@@ -115,8 +116,11 @@ NumberOfHarmlessHarmfulJoins = 0
 # Number of Harmful-Harmful Joins
 NumberOfHarmfulHarmfulJoins = 0
 
-# Average Number of Chase Steps from Input to Output
-AverageChaseSteps = 2
+# Number of Input-Output Sequences
+NumberOfInputOutputSequences = 3
+
+# Average Length of Input-Output Sequences
+AverageInputOutputSequenceLength = 2
 
 # Number of Linear Recursions
 NumberOfLinearRecursions = 1
@@ -127,8 +131,8 @@ NumberOfLeftJoinRecursions = 1
 # Number of Right-Join Recursions
 NumberOfRightJoinRecursions = 0
 
-# Number of Non-Linear Join Recursions
-NumberOfNonLinearJoinRecursions = 0
+# Number of Left-Right Join Recursions
+NumberOfLeftRightJoinRecursions = 0
 
 # Average Recursion length
 AverageRecursionLength = 2
@@ -140,10 +144,13 @@ NumberOfSelectionConditions = 3
 AverageSelectivity = 3
 
 # Number of records in CSV files
-NumberOfRecordsCSV = 10
+NumberOfRecordsCSV = 100
 
 # Guardedness of the Program
 IsGuarded = false
+
+# Shyness of the Program
+IsShy = false
 
 # Name of the Program
 ProgramName = tutorialProgram
@@ -158,10 +165,10 @@ The generated program (```.vada```) and data (```.csv```) are added to the folde
 This is an example of a program created with the scenario above:
 ```
 % =====ORIGINAL VADA PROGRAM PARAMETERS=====
-% Number of Input Atoms: 5
-% Number of Output Atoms: 3
-% Average number of Variables per Atom: 1
-% Variance number of Variables per Atom: 1.0
+% Number of Input Predicates: 5
+% Number of Output Predicates: 3
+% Average number of Variables per Predicate: 1
+% Variance number of Variables per Predicate: 1.0
 % Number of Existential Rules: 3
 % Average number of Existentially Quantified Variables per Rule: 1
 % Variance of Existentially Quantified Variables per Rule: 1.0
@@ -172,53 +179,53 @@ This is an example of a program created with the scenario above:
 % Number of Harmless-Harmless Join Rules without Ward: 0
 % Number of Harmless-Harmful Joins: 0
 % Number of Harmful-Harmful Joins: 0
-% Average number of Chase Steps: 2
-% Number of Chase Steps for each Output Atom: 
-% out_1->4; out_2->3; out_3->2; 
+% Number of Input-Output Sequences: 3
+% Average number of Max Chase Steps: 2
+% Number of Max Chase Steps for each Output Predicate: 
+% out_1->1; out_2->1; out_3->2; 
 % Number of Linear Recursions: 1
 % Number of Left Join Recursions: 1
 % Number of Right Join Recursions: 0
-% Number of Non-Linear Join Recursions: 0
+% Number of Left-Right Join Recursions: 0
 % Average Recursion Length: 2
 % Length for each Recursion: 
-% leftJRec_1->1; linRec_1->2; 
+% leftJRec_1->1; linRec_1->1; 
 % Number of Selection Conditions: 3
 % Average Selectivity: 3
-% Number of records in CSV files: 10
+% Number of records in CSV files: 100
 % Guardedness of the Program: false
+% Shyness of the Program: false
 % Name of the Program: tutorialProgram
 % ==========================================
 
 % =====ADAPTED VADA PROGRAM PARAMETERS=====
-% Number of Input Atoms: 3
-% Number of Dangerous Rules: 1
-% Number of Harmless-Harmless Join Rules with Ward: 2
-% Number of Harmless-Harmless Join Rules without Ward: 1
+% Number of Input Predicates: 1
+% Number of Linear Rules: 9
+% Number of Existential Rules: 5
 % ==========================================
 
 @output("out_1").
+@bind("out_1","csv","generatedPrograms/tutorialProgram/outputCsv/","out_1_csv.csv").
 @output("out_2").
+@bind("out_2","csv","generatedPrograms/tutorialProgram/outputCsv/","out_2_csv.csv").
 @output("out_3").
-@input("edb_4").
-@bind("edb_4","csv","generatedPrograms/tutorialProgram","edb_4_csv.csv").
-@mapping("edb_4",0,"arg_0","int").
-@mapping("edb_4",1,"arg_1","int").
-@input("edb_2").
-@bind("edb_2","csv","generatedPrograms/tutorialProgram","edb_2_csv.csv").
-@mapping("edb_2",0,"arg_0","int").
-@input("edb_3").
-@bind("edb_3","csv","generatedPrograms/tutorialProgram","edb_3_csv.csv").
-@mapping("edb_3",0,"arg_0","int").
-@mapping("edb_3",1,"arg_1","int").
-idb_1(HARMLESS_1,HARMLESS_2) :- edb_4(HARMLESS_1,HARMLESS_2).
-idb_2(HARMLESS_1,HARMLESS_2) :- idb_1(HARMLESS_1,HARMLESS_2), edb_4(HARMLESS_3,HARMLESS_2), HARMLESS_1>=40.
-idb_3(HARMLESS_1,HARMFUL_1) :- idb_2(HARMLESS_1,HARMLESS_2).
-idb_4(HARMLESS_1) :- idb_3(HARMLESS_1,HARMFUL_1), edb_2(HARMFUL_1).
-idb_1(HARMLESS_1,HARMLESS_2) :- idb_2(HARMLESS_1,HARMLESS_2).
-idb_2(HARMLESS_4,HARMLESS_5) :- idb_2(HARMLESS_4,HARMLESS_5), edb_3(HARMLESS_6,HARMLESS_5).
-out_1(HARMLESS_1,HARMFUL_1) :- idb_3(HARMLESS_1,HARMFUL_1), HARMLESS_1=32.
-out_2(HARMLESS_1,HARMFUL_2) :- idb_2(HARMLESS_1,HARMLESS_2), HARMLESS_1>=13.
-out_3(HARMLESS_1,HARMFUL_3) :- idb_1(HARMLESS_1,HARMLESS_2).
+@bind("out_3","csv","generatedPrograms/tutorialProgram/outputCsv/","out_3_csv.csv").
+@input("edb_1").
+@bind("edb_1","csv","generatedPrograms/tutorialProgram/inputCsv/","edb_1_csv.csv").
+@mapping("edb_1",0,"arg_0","int").
+@mapping("edb_1",1,"arg_1","int").
+idb_1(HARMLESS_1,HARMLESS_2) :- edb_1(HARMLESS_1,HARMLESS_2), HARMLESS_1<38.
+idb_2(HARMLESS_1,HARMFUL_1) :- idb_1(HARMLESS_1,HARMLESS_2), idb_1(HARMLESS_3,HARMLESS_1).
+out_1(HARMLESS_1,HARMLESS_2) :- edb_1(HARMLESS_1,HARMLESS_2).
+out_2(HARMLESS_1,HARMLESS_2) :- edb_1(HARMLESS_1,HARMLESS_2).
+out_3(HARMLESS_1,HARMLESS_2) :- idb_1(HARMLESS_1,HARMLESS_2).
+idb_1(HARMLESS_5,HARMLESS_6) :- idb_1(HARMLESS_5,HARMLESS_6).
+idb_2(HARMLESS_7,HARMFUL_3) :- idb_2(HARMLESS_7,HARMFUL_2), edb_1(HARMLESS_8,HARMLESS_7).
+idb_3(HARMLESS_1,HARMFUL_4) :- idb_1(HARMLESS_1,HARMLESS_2), HARMLESS_1=86.
+out_2(HARMLESS_1,HARMLESS_1) :- idb_3(HARMLESS_1,HARMFUL_4), HARMLESS_1>=17.
+out_3(HARMLESS_1,HARMLESS_1) :- idb_3(HARMLESS_1,HARMFUL_4).
+out_2(HARMLESS_1,HARMLESS_1) :- idb_3(HARMLESS_1,HARMFUL_4).
+out_1(HARMLESS_1,HARMLESS_1) :- idb_3(HARMLESS_1,HARMFUL_4), idb_2(HARMLESS_1,HARMFUL_5).
 ```
 Please refer to [Configuration Scenario and Program](#configuration-scenario-and-program) for a more in-depth explanation and to ```exampleScenarios``` and the [test suite](https://github.com/joint-kg-labs/iWarded/blob/main/src/test/java/test/iWarded/TestiWarded.java) for more example scenarios.
 
@@ -242,7 +249,8 @@ In terms of recursions, iWarded is able to create:
 In terms of additional features, iWarded is able to create:
 * *expressions*, boolean expressions which combine body variables with standard comparison operators (=,>,<,>=,<=,<>);
 * *annotations*, special facts that allow injecting specific behaviors into the set of rules: *input* annotations specify that the facts for an atom are imported from an external data source; *output* annotations specify that the facts for an atom are exported to an external destination; *bind* annotations, which bind input or output atoms to a source; *mapping* annotations, which map specific columns of the input/output source to a position of an atom;
-* *guarded* programs, sets of rules where (at least) a single atom in the body, called *guard*, contains all universally quantified variables.
+* *guarded* programs, sets of rules where (at least) a single atom in the body, called *guard*, contains all universally quantified variables;
+* *shy* programs, sets of rules where harmful join variables and dangerous variables are affected by distinct existentials;
 
 Please refer to [Configuration Scenario and Program](#configuration-scenario-and-program) for a detailed description of the structure of a generic generated program.
 
@@ -253,21 +261,21 @@ It is possible to create a program from a pre-defined configuration file (using 
 Please refer to the [template](https://github.com/joint-kg-labs/iWarded/blob/main/exampleScenarios/templateScenario.txt) to build a configuration file and to ```exampleScenarios``` and the [test suite](https://github.com/joint-kg-labs/iWarded/blob/main/src/test/java/test/iWarded/TestiWarded.java) for multiple example scenarios.
 
 A generic scenario is based on the primitives currently supported by iWarded:
-* *Number of Input Atoms*:
-	the total number of edb atoms with the ```@input``` annotation and the ```.csv``` dataset
+* *Number of Input Predicates*:
+	the total number of edb predicates with the ```@input``` annotation and the ```.csv``` dataset
     [int>=1]
 
-* *Number of Output Atoms*:
-	the total number of idb atoms with the ```@output``` annotation
-    [int>=0]
-
-* *Average number of Variables per Atom*:
-	the average number of variables as arguments of each atom
+* *Number of Output Predicates*:
+	the total number of idb predicates with the ```@output``` annotation
     [int>=1]
 
-* *Variance of Variables per Atom*:
-	the variance for the number of variables as arguments of each atom
-    [float>=1.0]
+* *Average number of Variables per Predicate*:
+	the average number of variables as arguments of each predicate
+    [int>=1]
+
+* *Variance of Variables per Predicate*:
+	the variance for the number of variables as arguments of each predicate
+    [float>=0]
 
 * *Number of Existential Rules*:
 	the total number of rules with an existential quantifier in the head
@@ -287,7 +295,7 @@ A generic scenario is based on the primitives currently supported by iWarded:
 
 * *Number of Linear Rules*:
 	the total number rules with a linear body
-    [int>=0]
+    [int>=1]
 
 * *Number of Harmless-Harmless Joins with Ward*:
 	the total number of rules with join between harmless variables and with dangerous variables in the ward
@@ -305,9 +313,13 @@ A generic scenario is based on the primitives currently supported by iWarded:
 	the total number of rules with join between harmful variables
     [int>=0]
 
-* *Average Number of Chase Steps from Input to Output*:
-	the average number of steps for each input-output sequence
-    [int>=0]
+* *Number of Input-Output Sequences*:
+	the total number of input-output sequences
+    [int>=1]
+
+* *Average Length of Input-Output Sequences*:
+	the average number of maximum steps in the chase per output atom
+    [int>=1]
 
 * *Number of Linear Recursions*:
 	the total number of linear rules with recursions
@@ -321,7 +333,7 @@ A generic scenario is based on the primitives currently supported by iWarded:
 	the total number of join rules with recursion on the right-join atom
     [int>=0]
 
-* *Number of Non-Linear Join Recursions*:
+* *Number of Left-Right Join Recursions*:
 	the total number of join rules with recursion on both the left-join and the right-join atom
     [int>=0]
 
@@ -339,10 +351,14 @@ A generic scenario is based on the primitives currently supported by iWarded:
 
 * *Number of records in CSV files*:
 	the total number of records in each input atoms'```.csv``` file
-    [int>=0]
+    [int>=1]
 
 * *Guardedness of the Program*:
 	whether for each rule all the universally quantified variables are comprised within a single guard atom in the body
+    [boolean true/false]
+    
+* *Shyness of the Program*:
+	whether for each rule the harmful join variables and dangerous variables are affected by distinct existentials
     [boolean true/false]
 
 * *Name of the Program*:
@@ -351,17 +367,17 @@ A generic scenario is based on the primitives currently supported by iWarded:
 ~~~sh
 # iWarded Scenario Configuration File
 
-# Number of Input Atoms
-NumberOfInputAtoms = 5
+# Number of Input Predicates
+NumberOfInputPredicates = 5
 
-# Number of Output Atoms
-NumberOfOutputAtoms = 3
+# Number of Output Predicates
+NumberOfOutputPredicates = 3
 
-# Average number of Variables per Atom
-AverageVarsInAtom = 1
+# Average number of Variables per Predicate
+AverageVarsInPredicate = 1
 
-# Variance of Variables per Atom
-VarianceVarsInAtom = 1.0
+# Variance of Variables per Predicate
+VarianceVarsInPredicate = 1.0
 
 # Number of Existential Rules
 NumberOfExistentialRules = 3
@@ -390,8 +406,11 @@ NumberOfHarmlessHarmfulJoins = 0
 # Number of Harmful-Harmful Joins
 NumberOfHarmfulHarmfulJoins = 0
 
-# Average Number of Chase Steps from Input to Output
-AverageChaseSteps = 2
+# Number of Input-Output Sequences
+NumberOfInputOutputSequences = 3
+
+# Average Length of Input-Output Sequences
+AverageInputOutputSequenceLength = 2
 
 # Number of Linear Recursions
 NumberOfLinearRecursions = 1
@@ -402,8 +421,8 @@ NumberOfLeftJoinRecursions = 1
 # Number of Right-Join Recursions
 NumberOfRightJoinRecursions = 0
 
-# Number of Non-Linear Join Recursions
-NumberOfNonLinearJoinRecursions = 0
+# Number of Left-Right Join Recursions
+NumberOfLeftRightJoinRecursions = 0
 
 # Average Recursion length
 AverageRecursionLength = 2
@@ -415,10 +434,13 @@ NumberOfSelectionConditions = 3
 AverageSelectivity = 3
 
 # Number of records in CSV files
-NumberOfRecordsCSV = 10
+NumberOfRecordsCSV = 100
 
 # Guardedness of the Program
 IsGuarded = false
+
+# Shyness of the Program
+IsShy = false
 
 # Name of the Program
 ProgramName = tutorialProgram
@@ -426,10 +448,10 @@ ProgramName = tutorialProgram
 The generated program consists of a network of rule sequences, designed to control the propagation of null and avoid violations of wardedness. The following is an example of a program generated from the ```exampleScenarios/tutorialScenario.txt``` above, which we here make use of to show the generic program template:
 ```
 % =====ORIGINAL VADA PROGRAM PARAMETERS=====
-% Number of Input Atoms: 5
-% Number of Output Atoms: 3
-% Average number of Variables per Atom: 1
-% Variance number of Variables per Atom: 1.0
+% Number of Input Predicates: 5
+% Number of Output Predicates: 3
+% Average number of Variables per Predicate: 1
+% Variance number of Variables per Predicate: 1.0
 % Number of Existential Rules: 3
 % Average number of Existentially Quantified Variables per Rule: 1
 % Variance of Existentially Quantified Variables per Rule: 1.0
@@ -440,63 +462,53 @@ The generated program consists of a network of rule sequences, designed to contr
 % Number of Harmless-Harmless Join Rules without Ward: 0
 % Number of Harmless-Harmful Joins: 0
 % Number of Harmful-Harmful Joins: 0
-% Average number of Chase Steps: 2
-% Number of Chase Steps for each Output Atom: 
-% out_1->2; out_2->1; out_3->5; 
+% Number of Input-Output Sequences: 3
+% Average number of Max Chase Steps: 2
+% Number of Max Chase Steps for each Output Predicate: 
+% out_1->1; out_2->1; out_3->2; 
 % Number of Linear Recursions: 1
 % Number of Left Join Recursions: 1
 % Number of Right Join Recursions: 0
-% Number of Non-Linear Join Recursions: 0
+% Number of Left-Right Join Recursions: 0
 % Average Recursion Length: 2
 % Length for each Recursion: 
-% leftJRec_1->1; linRec_1->3; 
+% leftJRec_1->1; linRec_1->1; 
 % Number of Selection Conditions: 3
 % Average Selectivity: 3
-% Number of records in CSV files: 10
+% Number of records in CSV files: 100
 % Guardedness of the Program: false
+% Shyness of the Program: false
 % Name of the Program: tutorialProgram
 % ==========================================
+
 % =====ADAPTED VADA PROGRAM PARAMETERS=====
-% Number of Input Atoms: 4
+% Number of Input Predicates: 1
 % Number of Linear Rules: 9
-% Number of Dangerous Rules: 1
-% Number of Harmless-Harmless Join Rules without Ward: 1
+% Number of Existential Rules: 5
 % ==========================================
+
 @output("out_1").
+@bind("out_1","csv","generatedPrograms/tutorialProgram/outputCsv/","out_1_csv.csv").
 @output("out_2").
+@bind("out_2","csv","generatedPrograms/tutorialProgram/outputCsv/","out_2_csv.csv").
 @output("out_3").
+@bind("out_3","csv","generatedPrograms/tutorialProgram/outputCsv/","out_3_csv.csv").
 @input("edb_1").
-@bind("edb_1","csv","generatedPrograms/tutorialProgram","edb_1_csv.csv").
+@bind("edb_1","csv","generatedPrograms/tutorialProgram/inputCsv/","edb_1_csv.csv").
 @mapping("edb_1",0,"arg_0","int").
 @mapping("edb_1",1,"arg_1","int").
-@input("edb_3").
-@bind("edb_3","csv","generatedPrograms/tutorialProgram","edb_3_csv.csv").
-@mapping("edb_3",0,"arg_0","int").
-@input("edb_4").
-@bind("edb_4","csv","generatedPrograms/tutorialProgram","edb_4_csv.csv").
-@mapping("edb_4",0,"arg_0","int").
-@input("edb_2").
-@bind("edb_2","csv","generatedPrograms/tutorialProgram","edb_2_csv.csv").
-@mapping("edb_2",0,"arg_0","int").
-
-idb_1(HARMLESS_1,HARMLESS_2) :- edb_1(HARMLESS_1,HARMLESS_2), HARMLESS_1>=29.
-
-idb_2(HARMLESS_1,HARMLESS_2) :- idb_1(HARMLESS_1,HARMLESS_2).
-idb_3(HARMLESS_1,HARMFUL_1) :- idb_2(HARMLESS_1,HARMLESS_2), edb_3(HARMLESS_2).
-idb_4(HARMLESS_1) :- idb_3(HARMLESS_1,HARMFUL_1), HARMLESS_1<=6.
-
-idb_5(HARMLESS_1) :- idb_4(HARMLESS_1), idb_1(HARMLESS_3,HARMLESS_1).
-idb_6(HARMLESS_1) :- idb_5(HARMLESS_1), edb_4(HARMLESS_1).
-
-idb_1(HARMLESS_1,HARMLESS_1) :- idb_3(HARMLESS_1,HARMFUL_1).
-idb_6(HARMLESS_1) :- idb_6(HARMLESS_1), edb_2(HARMLESS_1).
-
-idb_7(HARMLESS_1,HARMFUL_2) :- idb_1(HARMLESS_1,HARMLESS_2), HARMLESS_1<=36.
-idb_8(HARMLESS_1,HARMFUL_2) :- idb_7(HARMLESS_1,HARMFUL_2).
-
-out_1(HARMLESS_1,HARMFUL_3) :- idb_1(HARMLESS_1,HARMLESS_2).
+idb_1(HARMLESS_1,HARMLESS_2) :- edb_1(HARMLESS_1,HARMLESS_2), HARMLESS_1<38.
+idb_2(HARMLESS_1,HARMFUL_1) :- idb_1(HARMLESS_1,HARMLESS_2), idb_1(HARMLESS_3,HARMLESS_1).
+out_1(HARMLESS_1,HARMLESS_2) :- edb_1(HARMLESS_1,HARMLESS_2).
 out_2(HARMLESS_1,HARMLESS_2) :- edb_1(HARMLESS_1,HARMLESS_2).
-out_3(HARMLESS_1) :- idb_4(HARMLESS_1).
+out_3(HARMLESS_1,HARMLESS_2) :- idb_1(HARMLESS_1,HARMLESS_2).
+idb_1(HARMLESS_5,HARMLESS_6) :- idb_1(HARMLESS_5,HARMLESS_6).
+idb_2(HARMLESS_7,HARMFUL_3) :- idb_2(HARMLESS_7,HARMFUL_2), edb_1(HARMLESS_8,HARMLESS_7).
+idb_3(HARMLESS_1,HARMFUL_4) :- idb_1(HARMLESS_1,HARMLESS_2), HARMLESS_1=86.
+out_2(HARMLESS_1,HARMLESS_1) :- idb_3(HARMLESS_1,HARMFUL_4), HARMLESS_1>=17.
+out_3(HARMLESS_1,HARMLESS_1) :- idb_3(HARMLESS_1,HARMFUL_4).
+out_2(HARMLESS_1,HARMLESS_1) :- idb_3(HARMLESS_1,HARMFUL_4).
+out_1(HARMLESS_1,HARMLESS_1) :- idb_3(HARMLESS_1,HARMFUL_4), idb_2(HARMLESS_1,HARMFUL_5).
 ```
 The generic program consists of:
 * *Comment section - Original parameters*:
@@ -522,7 +534,7 @@ The generic program consists of:
 	a set of linear and join rules, each introducing a recursion and thus a cycle in the predicate graph.
 
 * *Program completion sequence*:
-	a set of extra rules needed to globally satisfy the parameters, e.g., the number of selection conditions, in the form of expressions, in our example.
+	a set of extra rules needed to globally satisfy the parameters, e.g., the number of selection conditions.
 
 * *Output completion sequence*:
 	a set of linear rules, one for each input-output sequence; the rule head is the output atom and the body atom is connected to the head of the rule closing the sequence.
@@ -536,4 +548,4 @@ from the root rule, the input-output sequence, the recursive sequences and the c
 from the root rule, a sequence of non existential, non dangerous linear rules to satisfy the corresponding input parameter, if required;
 
 * *Tertiary branches*: 
-from the root rule, individual existential, dangerous, linear and join rules to satisfy  the corresponding input parameters, if required.
+from the root rule, individual existential, dangerous, linear and join rules to satisfy the corresponding input parameters, if required.

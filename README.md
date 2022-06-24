@@ -4,9 +4,9 @@ iWarded is a benchmarking system for Warded Datalog+/- reasoning.
 
 In particular it allows:
 * building warded Datalog+/- benchmark settings
-* building guarded Datalog+/- benchmark settings (which we sometimes call "iGuarded")
-* building various subsets of warded and/or guarded Datalog+/- benchmark settings via a multitude of parameters
-
+* building guarded Datalog+/- benchmark settings
+* building shy Datalog+/- benchmark settings
+* building various subsets of warded and/or guarded and/or shy Datalog+/- benchmark settings via a multitude of parameters
 
 The benchmark settings it creates consist of synthetic programs and data sources from realistic scenarios with distinct characteristics,
 and are aimed at testing and benchmarking systems that implement warded or guarded Datalog+/- reasoning.

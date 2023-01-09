@@ -20,15 +20,16 @@ iWarded is written in Java and uses ```Maven``` for building.
 - Maven 3.
 
 ### Installation steps
-To build iWarded, run the following script from the source folder ```iWardedGenerator```.  
+To build iWarded, run the following script from the source folder ```iWarded```.  
 ```
 ./iWarded_build.sh
 ```
 This will download ```jar``` dependencies and generate a jar file in the ```target``` folder.  
-To check that iWarded is working, run the following script from the source folder ```iWardedGenerator```:
+To use iWarded, run the following script from the source folder ```iWarded```:
 ```
-./iWarded_run.sh h
+./iWarded_run.sh
 ```
+
 ## Using iWarded
 There are different ways to use iWarded:
 * for *multiple* uses, with a simple interactive shell built with jLine3, by running ```./iWarded_run.sh``` without any arguments;

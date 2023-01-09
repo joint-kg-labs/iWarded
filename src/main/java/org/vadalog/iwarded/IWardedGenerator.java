@@ -559,7 +559,6 @@ public final class IWardedGenerator {
 			catch (Exception e) {
 				System.out.println(e.getMessage());
 				formatter.printHelp("CommandLineParameters", options);
-				System.exit(1);
 			}
 		}
 	}

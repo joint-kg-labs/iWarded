@@ -354,7 +354,7 @@ public class ModelGenerator {
 	 */
 	public void setParameters(String[] args){
 		/*if some parameters are not set, default values are employed*/
-		if(args.length!=27) {
+		if(args.length!=26) {
 			this.numberOfInputPredicates = 1;
 			this.numberOfOutputPredicates = 1;
 			this.averageVarsInPredicate = 1;
@@ -371,7 +371,6 @@ public class ModelGenerator {
 			this.numberOfInputOutputSequences = 1;
 			this.averageInputOutputSequenceLength = 1;
 			this.numberOfLinearRecursions = 0;
-			this.numberOfLeftJoinRecursions = 0;
 			this.numberOfLeftJoinRecursions = 0;
 			this.numberOfRightJoinRecursions = 0;
 			this.numberOfLeftRightJoinRecursions = 0;
@@ -528,10 +527,10 @@ public class ModelGenerator {
 				this.isGuarded = true;
 
 			this.isShy = false;
-			if(args[24]!=null && args[25].equals("true"))
+			if(args[24]!=null && args[24].equals("true"))
 				this.isShy = true;
 
-			this.programName = args[26];
+			this.programName = args[25];
 
 		}
 
